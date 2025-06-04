@@ -209,9 +209,9 @@
         sdk
       ];
       env = {
-        ANDROID_HOME = "${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = lib.mkForce "${sdk}/libexec/android-sdk";
-        JAVA_HOME = "${pkgs.jdk17.home}";
+        ANDROID_HOME = "''${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = lib.mkForce "''${sdk}/libexec/android-sdk";
+        JAVA_HOME = "''${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
