@@ -167,8 +167,9 @@
     EOF
 
     echo "Generating root build.gradle..."
+    # **FIXED**: Downgraded AGP version to be compatible with Gradle 8.0.2
     cat <<EOF > "$out/build.gradle"
-    plugins { id 'com.android.application' version '8.4.1' apply false }
+    plugins { id 'com.android.application' version '8.2.0' apply false }
     EOF
 
     echo "Generating settings.gradle..."
@@ -187,7 +188,7 @@
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, lib, ... }:
     let
-      # **FIXED**: Re-added the androidEnv override to ensure the license is accepted.
+      # Use an override to ensure the Android SDK license is accepted.
       androidEnv = pkgs.androidenv.override {
         inherit pkgs;
         licenseAccepted = true;
@@ -200,7 +201,6 @@
         includeEmulator = true;
         includeSources = false;
       };
-      # The correct attribute is 'androidsdk', not 'sdk'.
       sdk = androidComposition.androidsdk;
     in
     {
