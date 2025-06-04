@@ -185,8 +185,9 @@
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
     let
+      # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
@@ -205,7 +206,7 @@
       ];
       env = {
         ANDROID_HOME = "''${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "''${pkgs.lib.mkForce ''${sdk}/libexec/android-sdk}"; # Using mkForce from user's working dev.nix
+        ANDROID_SDK_ROOT = lib.mkForce "''${sdk}/libexec/android-sdk";
         JAVA_HOME = "''${pkgs.jdk17.home}";
       };
       idx = {
