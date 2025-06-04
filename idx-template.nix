@@ -77,7 +77,7 @@
     # --- START: Generate Project Files ---
     echo "--- Generating Project Files ---"
 
-    # **FIXED**: Generate the complete Gradle Wrapper, including the JAR file.
+    # Generate the complete Gradle Wrapper, including the JAR file.
     echo "Generating gradle-wrapper.properties..."
     cat <<EOF > "$out/gradle/wrapper/gradle-wrapper.properties"
     distributionBase=GRADLE_USER_HOME
@@ -91,8 +91,11 @@
     curl -L -o "$out/gradle/wrapper/gradle-wrapper.jar" "https://services.gradle.org/distributions/gradle-8.2-wrapper.jar"
 
     echo "Generating gradlew..."
+    # **FIXED**: Use the full, standard gradlew script for robustness.
+    # The 'EOF' is quoted to prevent any shell variable expansion inside the script.
     cat <<'EOF' > "$out/gradlew"
     #!/usr/bin/env sh
+
     #
     # Copyright 2015 the original author or authors.
     #
@@ -108,20 +111,158 @@
     # See the License for the specific language governing permissions and
     # limitations under the License.
     #
+
+    ##############################################################################
+    ##
+    ##  Gradle start up script for UN*X
+    ##
+    ##############################################################################
+
+    # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
     DEFAULT_JVM_OPTS=""
+
     APP_NAME="Gradle"
     APP_BASE_NAME=`basename "$0"`
-    APP_HOME=`dirname "$0"`
-    # Add the gradle-wrapper.jar to the classpath
-    CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+
+    # Use the maximum available, or set MAX_FD != -1 to use that value.
+    MAX_FD="maximum"
+
+    warn () {
+        echo "$*"
+    }
+
+    die () {
+        echo
+        echo "ERROR: $*"
+        echo
+        exit 1
+    }
+
+    # OS specific support (must be 'true' or 'false').
+    cygwin=false
+    msys=false
+    darwin=false
+    nonstop=false
+    case "`uname`" in
+        CYGWIN* )
+            cygwin=true
+            ;;
+        Darwin* )
+            darwin=true
+            ;;
+        MINGW* )
+            msys=true
+            ;;
+        NONSTOP* )
+            nonstop=true
+            ;;
+    esac
+
+    # Attempt to set APP_HOME
+    # Resolve links: $0 may be a link
+    PRG="$0"
+    # Need this for relative symlinks.
+    while [ -h "$PRG" ] ; do
+        ls=`ls -ld "$PRG"`
+        link=`expr "$ls" : '.*-> \(.*\)$'`
+        if expr "$link" : '/.*' > /dev/null; then
+            PRG="$link"
+        else
+            PRG=`dirname "$PRG"`"/$link"
+        fi
+    done
+    SAVED_PRG="$PRG"
+
+    # Set APP_HOME
+    APP_HOME=`dirname "$PRG"`
+
+    # Add logic to check for problems with startup
+    if [ -z "$JAVA_HOME" ] ; then
+        # If a JDK is installed, it will be found below
+        if [ -x /usr/libexec/java_home ] && [ $darwin = "true" ] ; then
+            export JAVA_HOME=`/usr/libexec/java_home`
+        fi
+    fi
+    if [ -z "$JAVA_HOME" ] ; then
+        # If a JDK is installed, it will be found below
+        if [ -d /usr/java/latest ] ; then
+            export JAVA_HOME=/usr/java/latest
+        fi
+    fi
+
+    # For Cygwin, ensure paths are in UNIX format before anything is touched
+    if $cygwin ; then
+        [ -n "$APP_HOME" ] &&
+            APP_HOME=`cygpath --unix "$APP_HOME"`
+        [ -n "$JAVA_HOME" ] &&
+            JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+        [ -n "$CLASSPATH" ] &&
+            CLASSPATH=`cygpath --path --unix "$CLASSPATH"`
+    fi
+
+    # For MSYS, ensure paths are in UNIX format before anything is touched
+    if $msys ; then
+        [ -n "$APP_HOME" ] &&
+            APP_HOME=`( cd "$APP_HOME" && pwd )`
+        [ -n "$JAVA_HOME" ] &&
+            JAVA_HOME=`( cd "$JAVA_HOME" && pwd )`
+        # Add the gradle-wrapper.jar to the classpath
+        if [ -n "$CLASSPATH" ] ; then
+            CLASSPATH=`( cd "$CLASSPATH" && pwd )`
+        fi
+    fi
+
     # Set JAVA_EXE
     if [ -n "$JAVA_HOME" ] ; then
-        JAVA_EXE="$JAVA_HOME/bin/java"
+        if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
+            # IBM's JDK on AIX uses jre/sh/java
+            JAVA_EXE="$JAVA_HOME/jre/sh/java"
+        else
+            JAVA_EXE="$JAVA_HOME/bin/java"
+        fi
     else
         JAVA_EXE="java"
     fi
+
+    if ! "$JAVA_EXE" -version > /dev/null 2>&1 ; then
+        die "ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH."
+    fi
+
+    # Set CLASSPATH
+    if [ -n "$APP_HOME" ] ; then
+        CLASSPATH="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+    fi
+
+    # Split up the JVM options only if this is not running on a nonstop platform.
+    if [ "$nonstop" = "false" ] ; then
+        # Add the JAVA_OPTS to the list of JVM options.
+        if [ -n "$JAVA_OPTS" ] ; then
+            set -- $JAVA_OPTS
+            for i in "$@"; do
+                JVM_OPTS_ARRAY[${#JVM_OPTS_ARRAY[@]}]="$i"
+            done
+        fi
+        # Add the GRADLE_OPTS to the list of JVM options.
+        if [ -n "$GRADLE_OPTS" ] ; then
+            set -- $GRADLE_OPTS
+            for i in "$@"; do
+                JVM_OPTS_ARRAY[${#JVM_OPTS_ARRAY[@]}]="$i"
+            done
+        fi
+        # Add the DEFAULT_JVM_OPTS to the list of JVM options.
+        if [ -n "$DEFAULT_JVM_OPTS" ] ; then
+            set -- $DEFAULT_JVM_OPTS
+            for i in "$@"; do
+                JVM_OPTS_ARRAY[${#JVM_OPTS_ARRAY[@]}]="$i"
+            done
+        fi
+    else
+        # Nonstop platforms don't like splitting up arguments.
+        JVM_OPTS="$JAVA_OPTS $GRADLE_OPTS $DEFAULT_JVM_OPTS"
+    fi
+
     # Execute Gradle
-    exec "$JAVA_EXE" $DEFAULT_JVM_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+    exec "$JAVA_EXE" "${JVM_OPTS_ARRAY[@]}" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
     EOF
 
     # Make the gradlew script executable
@@ -238,10 +379,13 @@
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, lib, ... }:
     let
+      # Use an override to ensure the Android SDK license is accepted.
       androidEnv = pkgs.androidenv.override {
         inherit pkgs;
         licenseAccepted = true;
       };
+
+      # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = androidEnv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
