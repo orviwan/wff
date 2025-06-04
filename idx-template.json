@@ -12,9 +12,9 @@
       "required": true
     },
     {
-      "id": "packageName",
+      "id": "package",
       "name": "Package Name",
-      "description": "The Android package name (e.g., com.example.mywatchface).",
+      "description": "The Android package name.",
       "type": "text",
       "default": "com.example.mywffwatch",
       "required": true

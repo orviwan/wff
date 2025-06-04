@@ -1,9 +1,9 @@
 { pkgs, ... }:
 
 let
-  generateManifest = { watchFaceName, packageName, wffVersion, minSdkVersion }: ''
+  generateManifest = { watchFaceName, package, wffVersion, minSdkVersion }: ''
     <manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)"
-        package="${packageName}">
+        package="${package}">
         <uses-permission android:name="android.permission.WAKE_LOCK" />
         <uses-feature android:name="android.hardware.type.watch" />
         <application
@@ -123,7 +123,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   echo "Generating AndroidManifest.xml..."
   cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
   ${generateManifest {
-    inherit watchFaceName packageName wffVersion;
+    inherit watchFaceName package wffVersion;
     minSdkVersion = MIN_SDK_VERSION;
   }}
   EOF
@@ -153,10 +153,10 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   cat <<EOF > "$APP_DIR/build.gradle"
   plugins { id 'com.android.application' }
   android {
-      namespace '${packageName}'
+      namespace '${package}'
       compileSdk 34
       defaultConfig {
-          applicationId "${packageName}"
+          applicationId "${package}"
           minSdk ${MIN_SDK_VERSION}
           targetSdk 34
           versionCode 1
