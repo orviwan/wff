@@ -184,17 +184,17 @@
     # --- START: Generate Workspace Environment File ---
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
+    # **FIXED**: Using `''${...}` to escape Nix variables so they are written
+    # literally to the file and evaluated in the correct context later.
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, ... }:
     let
-      # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = pkgs.androidenv.composeAndroidPackages {
-        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
+        platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
-        licenseAccepted = true; # This is crucial for the SDK to be usable
+        licenseAccepted = true;
         includeEmulator = true;
       };
-      # **FIXED**: Define the SDK path as its own variable to avoid scoping issues.
       sdk = androidComposition.androidsdk;
     in
     {
@@ -202,13 +202,12 @@
       packages = [
         pkgs.jdk17
         pkgs.gradle
-        sdk # Use the new 'sdk' variable
+        sdk
       ];
       env = {
-        # Reference the new 'sdk' variable here as well.
-        ANDROID_HOME = "${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "${sdk}/libexec/android-sdk";
-        JAVA_HOME = "${pkgs.jdk17.home}";
+        ANDROID_HOME = "''${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "''${sdk}/libexec/android-sdk";
+        JAVA_HOME = "''${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
