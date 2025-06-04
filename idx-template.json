@@ -24,7 +24,7 @@
       "name": "Watch Face Format Version",
       "description": "Select the WFF version. This will set the corresponding minimum API level.",
       "type": "enum",
-      "options": ["1", "2", "3", "4"],
+      "options": { "1": "1", "2": "2", "3": "3", "4": "4" },
       "default": "4",
       "required": true
     },
@@ -33,7 +33,7 @@
       "name": "Initial Watch Type",
       "description": "Choose a starting point for your watch face.",
       "type": "enum",
-      "options": ["Analog", "Digital"],
+      "options": { "Analog": "Analog", "Digital": "Digital" },
       "default": "Analog",
       "required": true
     }
