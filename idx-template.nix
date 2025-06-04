@@ -20,10 +20,11 @@
 
     # --- START: Define Variables ---
     # Determine the minimum SDK version based on the selected WFF version.
-    MIN_SDK_VERSION="33"
-    if [ "${wffVersion}" = "2" ]; then MIN_SDK_VERSION="34"; fi
-    if [ "${wffVersion}" = "3" ]; then MIN_SDK_VERSION="35"; fi
-    if [ "${wffVersion}" = "4" ]; then MIN_SDK_VERSION="36"; fi
+    # **FIXED**: The variable is now exported to be available in subshells like cat <<EOF.
+    export MIN_SDK_VERSION="33"
+    if [ "${wffVersion}" = "2" ]; then export MIN_SDK_VERSION="34"; fi
+    if [ "${wffVersion}" = "3" ]; then export MIN_SDK_VERSION="35"; fi
+    if [ "${wffVersion}" = "4" ]; then export MIN_SDK_VERSION="36"; fi
     # Replace spaces in the watch face name for the Gradle project name.
     PROJECT_NAME=$(echo "${watchFaceName}" | sed 's/ //g')
     # --- END: Define Variables ---
