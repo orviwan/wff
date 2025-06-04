@@ -13,7 +13,7 @@
     },
     {
       "id": "pkg",
-      "name": "Package Name",
+      "name": "Pkg Name",
       "description": "The Android package name.",
       "type": "text",
       "default": "com.example.mywffwatch",
