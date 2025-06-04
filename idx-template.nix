@@ -1,7 +1,6 @@
 # This is the function signature. It accepts an attribute set of arguments.
-# **FIXED**: The function signature now explicitly defines the expected arguments
-# to prevent infinite recursion errors in the templating system.
-({ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }@args):
+# **FIXED**: Corrected the function signature syntax to remove the invalid parentheses.
+{ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
 
 let
   # This helper function generates the content for AndroidManifest.xml
