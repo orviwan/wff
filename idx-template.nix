@@ -191,7 +191,7 @@
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
         buildToolsVersions = [ "34.0.0" ];
-        # **FIXED**: Removed the 'licenseAccepted' argument as it was causing an error.
+        licenseAccepted = true;
         # The platform likely handles license acceptance automatically.
         includeEmulator = true;
       };
@@ -212,6 +212,11 @@
       idx = {
         previews = {
           enable = false; # Previews are disabled for debugging
+          previews = {
+            "android-emulator" = {
+              manager = "android";
+            };
+          };
         };
         workspace = {
           onCreate = {
