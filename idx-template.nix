@@ -99,18 +99,20 @@ let
     }
   '';
 
+  # **FIXED**: The logic for MIN_SDK_VERSION is now in the Nix `let` block,
+  # so it's available during Nix evaluation time.
+  MIN_SDK_VERSION =
+    if wffVersion == "2" then "34"
+    else if wffVersion == "3" then "35"
+    else if wffVersion == "4" then "36"
+    else "33"; # Default for v1
+
 in
 # This is the main shell script that Firebase Studio executes.
 # It receives the parameters from idx-template.json and builds the project.
 pkgs.writeShellScriptBin "scaffold-wff-project" ''
   # Exit immediately if any command fails
   set -e
-
-  # Determine the minimum SDK version based on the selected WFF version
-  MIN_SDK_VERSION="33"
-  if [ "${wffVersion}" = "2" ]; then MIN_SDK_VERSION="34"; fi
-  if [ "${wffVersion}" = "3" ]; then MIN_SDK_VERSION="35"; fi
-  if [ "${wffVersion}" = "4" ]; then MIN_SDK_VERSION="36"; fi
 
   APP_DIR="$out/app"
 
@@ -134,7 +136,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
   ${generateManifest {
     inherit watchFaceName watchFacePkg wffVersion;
-    minSdkVersion = MIN_SDK_VERSION;
+    minSdkVersion = MIN_SDK_VERSION; # This now correctly uses the Nix variable
   }}
   EOF
 
@@ -171,7 +173,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
       compileSdk 34
       defaultConfig {
           applicationId "${watchFacePkg}"
-          minSdk ${MIN_SDK_VERSION}
+          minSdk ${MIN_SDK_VERSION} # This now correctly uses the Nix variable
           targetSdk 34
           versionCode 1
           versionName "1.0"
@@ -204,7 +206,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   # Generate the workspace's .idx/dev.nix file using the helper function
   echo "Generating .idx/dev.nix..."
   cat <<EOF > "$out/.idx/dev.nix"
-  ${generateDevNix { inherit MIN_SDK_VERSION; }}
+  ${generateDevNix { inherit MIN_SDK_VERSION; }} # This now correctly uses the Nix variable
   EOF
 
   echo "WFF project scaffolding complete!"
