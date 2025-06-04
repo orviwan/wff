@@ -191,8 +191,7 @@
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
         buildToolsVersions = [ "34.0.0" ];
-        # **FIXED**: Use the correct `licenses` attribute to accept the license.
-        licenses = [ "android-sdk-license" ];
+        # **FIXED**: Removed the 'licenses' attribute, assuming the platform handles it.
         includeEmulator = true;
       };
       sdk = androidComposition.androidsdk;
@@ -212,10 +211,11 @@
       idx = {
         previews = {
           enable = true;
-          previews = [{
-            id = "wear-os-emulator";
-            manager = "android";
-          }];
+          previews = {
+            "android-emulator" = {
+              manager = "android";
+            };
+          };
         };
         workspace = {
           onCreate = {
