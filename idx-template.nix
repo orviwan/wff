@@ -1,3 +1,4 @@
+nix
 # **FIXED**: Removed 'pkgs' from the function signature to break recursion.
 # 'pkgs' will now be defined internally.
 { watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
@@ -128,107 +129,129 @@ let
     else if wffVersion == "4" then "36"
     else "33"; # Default for v1
 
+  # Define the main scaffolding script derivation
+  scaffoldScript = pkgs.writeShellScriptBin "scaffold-wff-project" ''
+    # Exit immediately if any command fails
+    set -e
+
+    APP_DIR="$out/app"
+
+    # Create the standard Android project directory structure
+    mkdir -p "$APP_DIR/src/main/res/raw"
+    mkdir -p "$APP_DIR/src/main/res/xml"
+    mkdir -p "$APP_DIR/src/main/res/drawable"
+    mkdir -p "$APP_DIR/src/main/res/values"
+    mkdir -p "$out/.idx"
+
+    # Copy assets from the template repo into the new project, if they exist
+    echo "Copying drawable assets..."
+    if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
+      cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+    fi
+    # Create an empty preview placeholder for now
+    touch "$APP_DIR/src/main/res/drawable/preview.png"
+
+    # Generate AndroidManifest.xml using the helper function
+    echo "Generating AndroidManifest.xml..."
+    cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
+    ${generateManifest {
+      inherit watchFaceName watchFacePkg wffVersion;
+      minSdkVersion = MIN_SDK_VERSION; # This now correctly uses the Nix variable
+    }}
+    EOF
+
+    # Generate watch_face_info.xml
+    echo "Generating watch_face_info.xml..."
+    cat <<EOF > "$APP_DIR/src/main/res/xml/watch_face_info.xml"
+    <WatchFaceInfo>
+        <Preview value="@drawable/preview" />
+        <Category value="CATEGORY_EMPTY" />
+        <Editable value="true" />
+    </WatchFaceInfo>
+    EOF
+
+    # Generate watchface.xml using the helper function
+    echo "Generating watchface.xml..."
+    cat <<EOF > "$APP_DIR/src/main/res/raw/watchface.xml"
+    ${generateWatchFaceXml { inherit watchType; }}
+    EOF
+
+    # Generate strings.xml
+    echo "Generating strings.xml..."
+    cat <<EOF > "$APP_DIR/src/main/res/values/strings.xml"
+    <resources>
+        <string name="app_name">${watchFaceName}</string>
+    </resources>
+    EOF
+
+    # Generate app/build.gradle
+    echo "Generating app/build.gradle..."
+    cat <<EOF > "$APP_DIR/build.gradle"
+    plugins { id 'com.android.application' }
+    android {
+        namespace '${watchFacePkg}'
+        compileSdk 34
+        defaultConfig {
+            applicationId "${watchFacePkg}"
+            minSdk ${MIN_SDK_VERSION} # This now correctly uses the Nix variable
+            targetSdk 34
+            versionCode 1
+            versionName "1.0"
+        }
+    }
+    EOF
+
+    # Generate root build.gradle
+    echo "Generating root build.gradle..."
+    cat <<EOF > "$out/build.gradle"
+    plugins { id 'com.android.application' version '8.2.0' apply false }
+    EOF
+
+    # Generate settings.gradle, using the corrected Nix string replacement function
+    echo "Generating settings.gradle..."
+    cat <<EOF > "$out/settings.gradle"
+    pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+    dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+    rootProject.name = "${(pkgs.lib.strings.replaceAll " " "" watchFaceName)}"
+    include ':app'
+    EOF
+
+    # Copy workspace definition files from the template repo if they exist
+    echo "Copying workspace definition files..."
+    if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
+    if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
+    if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
+    if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
+
+    # Generate the workspace's .idx/dev.nix file using the helper function
+    echo "Generating .idx/dev.nix..."
+    cat <<EOF > "$out/.idx/dev.nix"
+    ${generateDevNix { inherit MIN_SDK_VERSION; }} # This now correctly uses the Nix variable
+    EOF
+
+    echo "WFF project scaffolding complete!"
+  '';
+
+  # Define the bootstrap script derivation
+  bootstrapScript = pkgs.writeShellScriptBin "bootstrap" ''
+    #!/bin/bash
+    # This script runs after the project is scaffolded.
+    # You can add commands here to initialize the project,
+    # install dependencies, run initial builds, etc.
+
+    echo "Running bootstrap script..."
+
+    # Example: Run initial gradle sync
+    # Note: The dev.nix handles some of this with onCreate,
+    # but you can add other steps here if needed.
+    # ./gradlew --version
+
+    echo "Bootstrap script finished."
+  '';
+
 in
-# This is the main shell script that Firebase Studio executes.
-# It receives the parameters from idx-template.json and builds the project.
-pkgs.writeShellScriptBin "scaffold-wff-project" ''
-  # Exit immediately if any command fails
-  set -e
-
-  APP_DIR="$out/app"
-
-  # Create the standard Android project directory structure
-  mkdir -p "$APP_DIR/src/main/res/raw"
-  mkdir -p "$APP_DIR/src/main/res/xml"
-  mkdir -p "$APP_DIR/src/main/res/drawable"
-  mkdir -p "$APP_DIR/src/main/res/values"
-  mkdir -p "$out/.idx"
-
-  # Copy assets from the template repo into the new project, if they exist
-  echo "Copying drawable assets..."
-  if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
-    cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
-  fi
-  # Create an empty preview placeholder for now
-  touch "$APP_DIR/src/main/res/drawable/preview.png"
-
-  # Generate AndroidManifest.xml using the helper function
-  echo "Generating AndroidManifest.xml..."
-  cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
-  ${generateManifest {
-    inherit watchFaceName watchFacePkg wffVersion;
-    minSdkVersion = MIN_SDK_VERSION; # This now correctly uses the Nix variable
-  }}
-  EOF
-
-  # Generate watch_face_info.xml
-  echo "Generating watch_face_info.xml..."
-  cat <<EOF > "$APP_DIR/src/main/res/xml/watch_face_info.xml"
-  <WatchFaceInfo>
-      <Preview value="@drawable/preview" />
-      <Category value="CATEGORY_EMPTY" />
-      <Editable value="true" />
-  </WatchFaceInfo>
-  EOF
-
-  # Generate watchface.xml using the helper function
-  echo "Generating watchface.xml..."
-  cat <<EOF > "$APP_DIR/src/main/res/raw/watchface.xml"
-  ${generateWatchFaceXml { inherit watchType; }}
-  EOF
-
-  # Generate strings.xml
-  echo "Generating strings.xml..."
-  cat <<EOF > "$APP_DIR/src/main/res/values/strings.xml"
-  <resources>
-      <string name="app_name">${watchFaceName}</string>
-  </resources>
-  EOF
-
-  # Generate app/build.gradle
-  echo "Generating app/build.gradle..."
-  cat <<EOF > "$APP_DIR/build.gradle"
-  plugins { id 'com.android.application' }
-  android {
-      namespace '${watchFacePkg}'
-      compileSdk 34
-      defaultConfig {
-          applicationId "${watchFacePkg}"
-          minSdk ${MIN_SDK_VERSION} # This now correctly uses the Nix variable
-          targetSdk 34
-          versionCode 1
-          versionName "1.0"
-      }
-  }
-  EOF
-
-  # Generate root build.gradle
-  echo "Generating root build.gradle..."
-  cat <<EOF > "$out/build.gradle"
-  plugins { id 'com.android.application' version '8.2.0' apply false }
-  EOF
-
-  # Generate settings.gradle, using the corrected Nix string replacement function
-  echo "Generating settings.gradle..."
-  cat <<EOF > "$out/settings.gradle"
-  pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-  dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
-  rootProject.name = "${(pkgs.lib.strings.replaceAll " " "" watchFaceName)}"
-  include ':app'
-  EOF
-
-  # Copy workspace definition files from the template repo if they exist
-  echo "Copying workspace definition files..."
-  if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
-  if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
-  if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
-  if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
-
-  # Generate the workspace's .idx/dev.nix file using the helper function
-  echo "Generating .idx/dev.nix..."
-  cat <<EOF > "$out/.idx/dev.nix"
-  ${generateDevNix { inherit MIN_SDK_VERSION; }} # This now correctly uses the Nix variable
-  EOF
-
-  echo "WFF project scaffolding complete!"
-''
+# Return a set containing both derivations
+{
+  scaffoldScript = scaffoldScript;
+  bootstrap = bootstrapScript;
+}
