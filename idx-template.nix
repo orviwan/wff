@@ -67,13 +67,12 @@
     touch "$APP_DIR/src/main/res/drawable/preview.png"
 
     # Copy the gradlew script from assets instead of generating it from a string.
-    if [ -f ./assets/gradlew ]; then
-      cp ./assets/gradlew "$out/gradlew"
-      chmod +x "$out/gradlew"
-      echo "Copied gradlew script."
-    else
-      echo "WARNING: ./assets/gradlew not found in template repository."
-    fi
+    # The 'if' condition has been removed to make this a mandatory step.
+    # The script will now fail with a clear error if ./assets/gradlew is not found.
+    echo "Copying gradlew script..."
+    cp ./assets/gradlew "$out/gradlew"
+    chmod +x "$out/gradlew"
+    echo "Copied gradlew script successfully."
 
     # Copy other essential files from the template repo if they exist.
     if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
