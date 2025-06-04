@@ -181,6 +181,28 @@
     # --- END: Generate Project Files ---
 
 
+    # --- START: Generate Workspace Environment File ---
+    echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
+    # Create a template dev.nix with a placeholder for the SDK version
+    cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
+    nix
+    { pkgs ? import <nixpkgs> {} }:
+
+    mkShell {
+      # Add the packages you need for your project here
+      buildInputs = [
+        pkgs.jdk17
+        pkgs.gradle
+        sdk
+      ];
+    }
+    DEV_NIX_EOF
+
+    # Replace the placeholder with the actual SDK version
+    sed "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
+    rm "$out/.idx/dev.nix.template" # Clean up the template file
+    # --- END: Generate Workspace Environment File ---
+
     echo "--- WFF project scaffolding complete! ---"
   '';
 }
