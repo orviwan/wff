@@ -1,0 +1,194 @@
+{ pkgs, ... }:
+
+let
+  generateManifest = { watchFaceName, packageName, wffVersion, minSdkVersion }: ''
+    <manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)"
+        package="${packageName}">
+        <uses-permission android:name="android.permission.WAKE_LOCK" />
+        <uses-feature android:name="android.hardware.type.watch" />
+        <application
+            android:allowBackup="true"
+            android:icon="@drawable/preview"
+            android:label="${watchFaceName}"
+            android:hasCode="false">
+            <meta-data
+                android:name="com.google.android.wearable.standalone"
+                android:value="true" />
+            <property
+                android:name="com.google.wear.watchface.format.version"
+                android:value="${wffVersion}" />
+            <service
+                android:name="androidx.wear.watchface.format.WatchFaceFormatService"
+                android:exported="true"
+                android:label="${watchFaceName}"
+                android:permission="android.permission.BIND_WALLPAPER">
+                <meta-data
+                    android:name="android.service.wallpaper"
+                    android:resource="@xml/watch_face_info" />
+            </service>
+        </application>
+    </manifest>
+  '';
+
+  generateWatchFaceXml = { watchType }:
+    if watchType == "Analog" then ''
+      <WatchFace width="450" height="450">
+        <Scene>
+          <PartImage x="0" y="0" width="450" height="450" resource="@drawable/background" />
+          <AnalogClock x="0" y="0" width="450" height="450">
+            <HourHand resource="@drawable/hour_hand" x="205" y="30" width="40" height="195" pivotX="0.5" pivotY="0.9" />
+            <MinuteHand resource="@drawable/minute_hand" x="215" y="20" width="20" height="215" pivotX="0.5" pivotY="0.9" />
+          </AnalogClock>
+        </Scene>
+      </WatchFace>
+    '' else ''
+      <WatchFace width="450" height="450">
+        <Scene>
+          <PartImage x="0" y="0" width="450" height="450" resource="@drawable/background" />
+          <DigitalClock x="0" y="195" width="450" height="60" alignment="CENTER">
+            <TimeText format="HH:mm">
+              <Font family="SANS_SERIF_THIN" size="60" weight="BOLD" color="#FFFFFFFF" />
+            </TimeText>
+          </DigitalClock>
+        </Scene>
+      </WatchFace>
+    '';
+
+  generateDevNix = { minSdkVersion }: ''
+    { pkgs, ... }: {
+      channel = "unstable";
+
+      packages = [
+        pkgs.jdk17
+        pkgs.gradle
+        (pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: with sdkPkgs; [
+          platform-tools
+          build-tools-34-0-0
+          platforms-android-${minSdkVersion}
+          cmdline-tools-latest
+          emulator
+          system-images-android-${minSdkVersion}-google_apis_playstore-x86_64
+        ]))
+      ];
+
+      env = {
+        ANDROID_SDK_ROOT = "''${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
+        ANDROID_HOME = "''${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
+        JAVA_HOME = "''${pkgs.jdk17.home}";
+      };
+
+      idx.previews = {
+        enable = true;
+        previews = [{
+          id = "wear-os-emulator";
+          manager = "android";
+        }];
+      };
+
+      idx.workspace.onCreate = {
+        gradle-sync = "./gradlew --version";
+      };
+
+      idx.extensions = [
+        "VisualStudioExptTeam.vscodeintellicode",
+        "redhat.java",
+        "naco-siren.gradle-language"
+      ];
+    }
+  '';
+
+in
+pkgs.writeShellScriptBin "scaffold-wff-project" ''
+  set -e
+
+  MIN_SDK_VERSION="33"
+  if [ "$wffVersion" = "2" ]; then MIN_SDK_VERSION="34"; fi
+  if [ "$wffVersion" = "3" ]; then MIN_SDK_VERSION="35"; fi
+  if [ "$wffVersion" = "4" ]; then MIN_SDK_VERSION="36"; fi
+
+  APP_DIR="$out/app"
+
+  mkdir -p "$APP_DIR/src/main/res/raw"
+  mkdir -p "$APP_DIR/src/main/res/xml"
+  mkdir -p "$APP_DIR/src/main/res/drawable"
+  mkdir -p "$APP_DIR/src/main/res/values"
+  mkdir -p "$out/.idx"
+
+  # Copy assets from the template repo into the new project
+  echo "Copying drawable assets..."
+  cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+  # Create an empty preview placeholder for now
+  touch "$APP_DIR/src/main/res/drawable/preview.png"
+
+  echo "Generating AndroidManifest.xml..."
+  cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
+  ${generateManifest {
+    inherit watchFaceName packageName wffVersion;
+    minSdkVersion = MIN_SDK_VERSION;
+  }}
+  EOF
+
+  echo "Generating watch_face_info.xml..."
+  cat <<EOF > "$APP_DIR/src/main/res/xml/watch_face_info.xml"
+  <WatchFaceInfo>
+      <Preview value="@drawable/preview" />
+      <Category value="CATEGORY_EMPTY" />
+      <Editable value="true" />
+  </WatchFaceInfo>
+  EOF
+
+  echo "Generating watchface.xml..."
+  cat <<EOF > "$APP_DIR/src/main/res/raw/watchface.xml"
+  ${generateWatchFaceXml { inherit watchType; }}
+  EOF
+
+  echo "Generating strings.xml..."
+  cat <<EOF > "$APP_DIR/src/main/res/values/strings.xml"
+  <resources>
+      <string name="app_name">${watchFaceName}</string>
+  </resources>
+  EOF
+
+  echo "Generating app/build.gradle..."
+  cat <<EOF > "$APP_DIR/build.gradle"
+  plugins { id 'com.android.application' }
+  android {
+      namespace '${packageName}'
+      compileSdk 34
+      defaultConfig {
+          applicationId "${packageName}"
+          minSdk ${MIN_SDK_VERSION}
+          targetSdk 34
+          versionCode 1
+          versionName "1.0"
+      }
+  }
+  EOF
+
+  echo "Generating root build.gradle..."
+  cat <<EOF > "$out/build.gradle"
+  plugins { id 'com.android.application' version '8.2.0' apply false }
+  EOF
+
+  echo "Generating settings.gradle..."
+  cat <<EOF > "$out/settings.gradle"
+  pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+  dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
+  rootProject.name = "${watchFaceName.replaceAll(" ", "")}"
+  include ':app'
+  EOF
+
+  # Copy workspace definition files from the template repo
+  echo "Copying workspace definition files..."
+  cp ./.idx/airules.md "$out/.idx/"
+  cp ./.gitignore "$out/"
+  cp ./README.md "$out/"
+  cp ./BLUEPRINT.md "$out/"
+
+  echo "Generating .idx/dev.nix..."
+  cat <<EOF > "$out/.idx/dev.nix"
+  ${generateDevNix { inherit MIN_SDK_VERSION; }}
+  EOF
+
+  echo "WFF project scaffolding complete!"
+''

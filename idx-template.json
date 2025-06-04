@@ -1,0 +1,37 @@
+{
+  "name": "Wear OS Watch Face (WFF)",
+  "description": "A starter template for creating declarative Wear OS watch faces using the Watch Face Format (WFF) and a Nix-powered Android SDK environment.",
+  "icon": "https://www.gstatic.com/images/branding/product/1x/wear_os_by_google_64dp.png",
+  "params": [
+    {
+      "name": "watchFaceName",
+      "displayName": "Watch Face Name",
+      "description": "The user-visible name of your watch face.",
+      "type": "text",
+      "defaultValue": "My WFF Watch"
+    },
+    {
+      "name": "packageName",
+      "displayName": "Package Name",
+      "description": "The Android package name (e.g., com.example.mywatchface).",
+      "type": "text",
+      "defaultValue": "com.example.mywffwatch"
+    },
+    {
+      "name": "wffVersion",
+      "displayName": "Watch Face Format Version",
+      "description": "Select the WFF version. This will set the corresponding minimum API level.",
+      "type": "enum",
+      "values": ["1", "2", "3", "4"],
+      "defaultValue": "4"
+    },
+    {
+      "name": "watchType",
+      "displayName": "Initial Watch Type",
+      "description": "Choose a starting point for your watch face.",
+      "type": "enum",
+      "values": ["Analog", "Digital"],
+      "defaultValue": "Analog"
+    }
+  ]
+}

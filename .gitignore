@@ -1,0 +1,27 @@
+# IDE files
+.idea/
+.gradle/
+local.properties
+.DS_Store
+
+# Build files
+build/
+*.apk
+*.aab
+*.ap_
+*.apks
+
+# Captures
+captures/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Generated files
+/app/build
+/app/release
+/app/debug
+
+# Firebase
+firebase.json
