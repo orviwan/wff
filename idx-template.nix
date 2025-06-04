@@ -191,7 +191,8 @@
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
         buildToolsVersions = [ "34.0.0" ];
-        licenseAccepted = true; # This is crucial for the SDK to be usable
+        # **FIXED**: Use the correct `licenses` attribute to accept the license.
+        licenses = [ "android-sdk-license" ];
         includeEmulator = true;
       };
       sdk = androidComposition.androidsdk;
@@ -221,7 +222,6 @@
             gradle-sync = "./gradlew --version";
           };
         };
-        # **FIXED**: Formatted the extensions list on a single line to avoid potential parsing issues.
         extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" ];
       };
     }

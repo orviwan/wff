@@ -2,6 +2,11 @@
 
 A starter template for creating declarative Wear OS watch faces using the Watch Face Format (WFF) and a Nix-powered environment in Firebase Studio.
 
+<a href="https://idx.google.com/import?url=https://github.com/orviwan/wff">
+  <img height="32" alt="Open in IDX" src="https://cdn.idx.dev/btn/open_dark_32.svg">
+</a>
+
+
 ## Quick Start
 
 1.  **Define Your Vision**: Open `BLUEPRINT.md` and outline the features and design of your watch face.
