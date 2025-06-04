@@ -104,7 +104,7 @@
     #
     # Unless required by applicable law or agreed to in writing, software
     # distributed under the License is distributed on an "AS IS" BASIS,
-    _VERSION_WITHOUT_WARRANTIES_OR_CONDITIONS OF ANY KIND, either express or implied.
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     # See the License for the specific language governing permissions and
     # limitations under the License.
     #
@@ -252,16 +252,17 @@
             DEFAULT_JVM_OPTS_ARRAY=( $DEFAULT_JVM_OPTS )
         fi
         # Combine the JVM options into a single list.
-        JVM_OPTS_ARRAY=( "${JVM_OPTS_ARRAY[@]}" "${GRADLE_OPTS_ARRAY[@]}" "${DEFAULT_JVM_OPTS_ARRAY[@]}" )
+        # **FIXED**: Escaped the '@' symbol to prevent Nix from misinterpreting it.
+        JVM_OPTS_ARRAY=( "''${JVM_OPTS_ARRAY[@]}" "''${GRADLE_OPTS_ARRAY[@]}" "''${DEFAULT_JVM_OPTS_ARRAY[@]}" )
         # Remove duplicates
-        JVM_OPTS_ARRAY=($(printf "%s\n" "${JVM_OPTS_ARRAY[@]}" | sort -u))
+        JVM_OPTS_ARRAY=($(printf "%s\n" "''${JVM_OPTS_ARRAY[@]}" | sort -u))
     else
         # Nonstop platforms don't like splitting up arguments.
         JVM_OPTS="$JAVA_OPTS $GRADLE_OPTS $DEFAULT_JVM_OPTS"
     fi
 
     # Execute Gradle
-    exec "$JAVA_EXE" "${JVM_OPTS_ARRAY[@]}" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+    exec "$JAVA_EXE" "''${JVM_OPTS_ARRAY[@]}" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
 
     EOF
 
