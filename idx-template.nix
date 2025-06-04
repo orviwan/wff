@@ -1,8 +1,9 @@
-{ pkgs, ... }:
+{ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
 
 let
+  # This helper function generates the content for AndroidManifest.xml
   generateManifest = { watchFaceName, watchFacePkg, wffVersion, minSdkVersion }: ''
-    <manifest xmlns:android="[http://schemas.android.com/apk/res/android](http://schemas.android.com/apk/res/android)"
+    <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="${watchFacePkg}">
         <uses-permission android:name="android.permission.WAKE_LOCK" />
         <uses-feature android:name="android.hardware.type.watch" />
@@ -30,6 +31,7 @@ let
     </manifest>
   '';
 
+  # This helper function generates the starting watchface.xml content
   generateWatchFaceXml = { watchType }:
     if watchType == "Analog" then ''
       <WatchFace width="450" height="450">
@@ -54,6 +56,7 @@ let
       </WatchFace>
     '';
 
+  # This helper function generates the workspace's .idx/dev.nix file content
   generateDevNix = { minSdkVersion }: ''
     { pkgs, ... }: {
       channel = "unstable";
@@ -67,7 +70,6 @@ let
           platforms-android-${minSdkVersion}
           cmdline-tools-latest
           emulator
-          system-images-android-${minSdkVersion}-google_apis_playstore-x86_64
         ]))
       ];
 
@@ -98,28 +100,36 @@ let
   '';
 
 in
+# This is the main shell script that Firebase Studio executes.
+# It receives the parameters from idx-template.json and builds the project.
 pkgs.writeShellScriptBin "scaffold-wff-project" ''
+  # Exit immediately if any command fails
   set -e
 
+  # Determine the minimum SDK version based on the selected WFF version
   MIN_SDK_VERSION="33"
-  if [ "$wffVersion" = "2" ]; then MIN_SDK_VERSION="34"; fi
-  if [ "$wffVersion" = "3" ]; then MIN_SDK_VERSION="35"; fi
-  if [ "$wffVersion" = "4" ]; then MIN_SDK_VERSION="36"; fi
+  if [ "${wffVersion}" = "2" ]; then MIN_SDK_VERSION="34"; fi
+  if [ "${wffVersion}" = "3" ]; then MIN_SDK_VERSION="35"; fi
+  if [ "${wffVersion}" = "4" ]; then MIN_SDK_VERSION="36"; fi
 
   APP_DIR="$out/app"
 
+  # Create the standard Android project directory structure
   mkdir -p "$APP_DIR/src/main/res/raw"
   mkdir -p "$APP_DIR/src/main/res/xml"
   mkdir -p "$APP_DIR/src/main/res/drawable"
   mkdir -p "$APP_DIR/src/main/res/values"
   mkdir -p "$out/.idx"
 
-  # Copy assets from the template repo into the new project
+  # Copy assets from the template repo into the new project, if they exist
   echo "Copying drawable assets..."
-  cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+  if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
+    cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+  fi
   # Create an empty preview placeholder for now
   touch "$APP_DIR/src/main/res/drawable/preview.png"
 
+  # Generate AndroidManifest.xml using the helper function
   echo "Generating AndroidManifest.xml..."
   cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
   ${generateManifest {
@@ -128,6 +138,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   }}
   EOF
 
+  # Generate watch_face_info.xml
   echo "Generating watch_face_info.xml..."
   cat <<EOF > "$APP_DIR/src/main/res/xml/watch_face_info.xml"
   <WatchFaceInfo>
@@ -137,11 +148,13 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   </WatchFaceInfo>
   EOF
 
+  # Generate watchface.xml using the helper function
   echo "Generating watchface.xml..."
   cat <<EOF > "$APP_DIR/src/main/res/raw/watchface.xml"
   ${generateWatchFaceXml { inherit watchType; }}
   EOF
 
+  # Generate strings.xml
   echo "Generating strings.xml..."
   cat <<EOF > "$APP_DIR/src/main/res/values/strings.xml"
   <resources>
@@ -149,6 +162,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   </resources>
   EOF
 
+  # Generate app/build.gradle
   echo "Generating app/build.gradle..."
   cat <<EOF > "$APP_DIR/build.gradle"
   plugins { id 'com.android.application' }
@@ -165,26 +179,29 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   }
   EOF
 
+  # Generate root build.gradle
   echo "Generating root build.gradle..."
   cat <<EOF > "$out/build.gradle"
   plugins { id 'com.android.application' version '8.2.0' apply false }
   EOF
 
+  # Generate settings.gradle, using the corrected Nix string replacement function
   echo "Generating settings.gradle..."
   cat <<EOF > "$out/settings.gradle"
   pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
   dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
-  rootProject.name = "${watchFaceName.replaceAll(" ", "")}"
+  rootProject.name = "${(builtins.replaceStrings [ " " ] [ "" ] watchFaceName)}"
   include ':app'
   EOF
 
-  # Copy workspace definition files from the template repo
+  # Copy workspace definition files from the template repo if they exist
   echo "Copying workspace definition files..."
-  cp ./.idx/airules.md "$out/.idx/"
-  cp ./.gitignore "$out/"
-  cp ./README.md "$out/"
-  cp ./BLUEPRINT.md "$out/"
+  if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
+  if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
+  if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
+  if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
 
+  # Generate the workspace's .idx/dev.nix file using the helper function
   echo "Generating .idx/dev.nix..."
   cat <<EOF > "$out/.idx/dev.nix"
   ${generateDevNix { inherit MIN_SDK_VERSION; }}
