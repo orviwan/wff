@@ -191,7 +191,8 @@
       androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
         buildToolsVersions = [ "34.0.0" ];
-        # **FIXED**: Removed the 'licenses' attribute, assuming the platform handles it.
+        # **FIXED**: Use the correct 'licenseAccepted' boolean attribute.
+        licenseAccepted = true;
         includeEmulator = true;
       };
       sdk = androidComposition.androidsdk;
