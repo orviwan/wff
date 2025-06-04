@@ -184,15 +184,14 @@
     # --- START: Generate Workspace Environment File ---
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
-    # **FIXED**: Using `''${...}` to escape Nix variables so they are written
-    # literally to the file and evaluated in the correct context later.
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, ... }:
     let
+      # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = pkgs.androidenv.composeAndroidPackages {
-        platformVersions = [ "__MIN_SDK_VERSION__" ];
+        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
         buildToolsVersions = [ "34.0.0" ];
-        licenseAccepted = true;
+        licenseAccepted = true; # This is crucial for the SDK to be usable
         includeEmulator = true;
       };
       sdk = androidComposition.androidsdk;
@@ -222,11 +221,8 @@
             gradle-sync = "./gradlew --version";
           };
         };
-        extensions = [
-          "VisualStudioExptTeam.vscodeintellicode",
-          "redhat.java",
-          "naco-siren.gradle-language"
-        ];
+        # **FIXED**: Formatted the extensions list on a single line to avoid potential parsing issues.
+        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" ];
       };
     }
     DEV_NIX_EOF
