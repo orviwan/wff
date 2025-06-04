@@ -195,7 +195,7 @@
 
       # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = androidEnv.composeAndroidPackages {
-        platformVersions = [ "36" ];
+        platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
         includeEmulator = true;
       };
@@ -204,14 +204,14 @@
     {
       channel = "stable-25.05";
       packages = [
-        pkgs.jdk17
-        pkgs.gradle
+        pkgs.jdk24
+        pkgs.gradle_8
         sdk
       ];
       env = {
         ANDROID_HOME = "''${sdk}/libexec/android-sdk";
         ANDROID_SDK_ROOT = lib.mkForce "''${sdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk17.home}";
+        JAVA_HOME = "''${pkgs.jdk24.home}";
       };
       idx = {
         previews = {
