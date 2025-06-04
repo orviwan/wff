@@ -168,7 +168,7 @@
 
     echo "Generating root build.gradle..."
     cat <<EOF > "$out/build.gradle"
-    plugins { id 'com.android.application' version '8.2.0' apply false }
+    plugins { id 'com.android.application' version '8.4.1' apply false }
     EOF
 
     echo "Generating settings.gradle..."
@@ -185,16 +185,9 @@
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
-    { pkgs, lib, ... }:
+    { pkgs, ... }:
     let
-
-      androidEnv = pkgs.androidenv.override {
-        inherit pkgs;
-        licenseAccepted = true;
-      };
-
-      # Use the standard Nix mechanism for composing an Android SDK
-      androidComposition = androidEnv.composeAndroidPackages {
+      androidComposition = pkgs.androidenv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
         includeEmulator = true;
@@ -202,35 +195,37 @@
       sdk = androidComposition.androidsdk;
     in
     {
-      channel = "stable-25.05";
+      channel = "stable-25.05"; # Using the user's last working channel
       packages = [
-        pkgs.jdk24
+        pkgs.jdk17 # Ensure JDK 17 is explicitly available
         pkgs.gradle_8
         sdk
+        pkgs.nodePackages.firebase-tools # From user's working dev.nix
+        pkgs.unzip # From user's working dev.nix
       ];
       env = {
         ANDROID_HOME = "''${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = lib.mkForce "''${sdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk24.home}";
+        ANDROID_SDK_ROOT = "''${pkgs.lib.mkForce ''${sdk}/libexec/android-sdk}"; # Using mkForce from user's working dev.nix
+        JAVA_HOME = "''${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
-          enable = true;
+          enable = true; # Re-enabling previews based on user feedback
           previews = {
-            "android" = {
+            "android" = { # Using the "android" key for the manager
               manager = "android";
             };
           };
         };
         workspace = {
           onCreate = {
-            gradle-sync = "gradle --version";
+            gradle-sync = "gradle --version"; # Changed from ./gradlew to gradle
           };
         };
+        # Updated extensions list from user's working dev.nix
         extensions = [ "VisualStudioExptTeam.vscodeintellicode" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
       };
     }
-
     DEV_NIX_EOF
 
     # Replace the placeholder with the actual SDK version
