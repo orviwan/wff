@@ -185,16 +185,40 @@
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
-    nix
-    { pkgs ? import <nixpkgs> {} }:
+    { pkgs, ... }:
+    let
+      androidComposition = pkgs.androidenv.composeAndroidPackages {
+        includeEmulator = true;
+        platformVersions = [ "34" ];
+        includeSources = false;
+      };
 
-    mkShell {
-      # Add the packages you need for your project here
-      buildInputs = [
+      androidSdk = androidComposition.androidsdk;
+    in
+    {
+      channel = "stable-25.05";
+      packages = [
         pkgs.jdk17
         pkgs.gradle
-        sdk
+        androidSdk
       ];
+      env = {
+        NIXPKGS_ACCEPT_ANDROID_SDK_LICENSE = "1";
+        ANDROID_HOME = "''${androidSdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "''${androidSdk}/libexec/android-sdk";
+        JAVA_HOME = "''${pkgs.jdk17.home}";
+      };
+      idx = {
+        previews = {
+          enable = false; # Previews are disabled for debugging
+        };
+        workspace = {
+          onCreate = {
+            gradle-sync = "./gradlew --version";
+          };
+        };
+        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" "vscjava.vscode-java-pack"  "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven"];
+      };
     }
     DEV_NIX_EOF
 
