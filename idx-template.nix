@@ -211,12 +211,7 @@
       };
       idx = {
         previews = {
-          enable = true;
-          previews = {
-            "android-emulator" = {
-              manager = "android";
-            };
-          };
+          enable = false; # Previews are disabled for debugging
         };
         workspace = {
           onCreate = {
