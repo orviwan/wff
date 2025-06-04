@@ -9,9 +9,8 @@
   watchType,
   ...
 }: {
-  # We don't need any special packages to run the bootstrap script itself.
-  # The script will use standard shell commands available in the base environment.
-  packages = [ pkgs.gnused ]; # Using gnused for cross-platform compatible `sed`
+  # We need gnused for cross-platform compatible `sed` command.
+  packages = [ pkgs.gnused ];
 
   # The 'bootstrap' attribute contains the shell script that scaffolds the entire project.
   # Firebase Studio will execute this script in the new workspace directory ($out).
@@ -184,37 +183,30 @@
 
     # --- START: Generate Workspace Environment File ---
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
-    # Note the DEV_NIX_EOF marker to prevent shell expansion of variables
-    # inside this block that are intended for Nix, not for this script.
-    cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix"
-    { pkgs, ... }: {
-      # It is recommended to pin the channel for reproducible environments.
+    # Create a template dev.nix with a placeholder for the SDK version
+    cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
+    { pkgs, ... }:
+    let
+      # Use the standard Nix mechanism for composing an Android SDK
+      androidComposition = pkgs.androidenv.composeAndroidPackages {
+        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
+        buildToolsVersions = [ "34.0.0" ];
+        licenseAccepted = true; # This is crucial for the SDK to be usable
+        includeEmulator = true;
+      };
+    in
+    {
       channel = "stable-24.05";
-
-      # These packages will be available in your workspace terminal.
       packages = [
         pkgs.jdk17
         pkgs.gradle
-        # android-nixpkgs provides a comprehensive and up-to-date Android SDK.
-        (pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: with sdkPkgs; [
-          platform-tools
-          build-tools-34-0-0
-          # We default to API 34 here for simplicity. A more advanced template
-          # could pass the MIN_SDK_VERSION from the bootstrap script into this file.
-          platforms-android-34
-          cmdline-tools-latest
-          emulator
-        ]))
+        androidComposition.androidsdk
       ];
-
-      # These environment variables will be set in your workspace.
       env = {
-        ANDROID_SDK_ROOT = "${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
-        ANDROID_HOME = "${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
+        ANDROID_HOME = "${androidComposition.androidsdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${androidComposition.androidsdk}/libexec/android-sdk";
         JAVA_HOME = "${pkgs.jdk17.home}";
       };
-
-      # This section configures the IDX previews.
       idx.previews = {
         enable = true;
         previews = [{
@@ -222,13 +214,9 @@
           manager = "android";
         }];
       };
-
-      # Commands to run when the workspace is first created.
       idx.workspace.onCreate = {
         gradle-sync = "./gradlew --version";
       };
-
-      # VS Code extensions to install in the workspace.
       idx.extensions = [
         "VisualStudioExptTeam.vscodeintellicode",
         "redhat.java",
@@ -236,6 +224,10 @@
       ];
     }
     DEV_NIX_EOF
+
+    # Replace the placeholder with the actual SDK version
+    sed "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
+    rm "$out/.idx/dev.nix.template" # Clean up the template file
     # --- END: Generate Workspace Environment File ---
 
     echo "--- WFF project scaffolding complete! ---"
