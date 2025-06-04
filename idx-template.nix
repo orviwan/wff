@@ -10,7 +10,7 @@
   ...
 }: {
   # We need gnused for cross-platform compatible `sed` command, and curl to download the wrapper.
-  packages = [ pkgs.gnused pkgs.curl ];
+  packages = [ pkgs.gnused pkgs.curl pkgs.tree ]; # Added tree for debugging
 
   # The 'bootstrap' attribute contains the shell script that scaffolds the entire project.
   # Firebase Studio will execute this script in the new workspace directory ($out).
@@ -19,27 +19,21 @@
     set -eu
 
     # --- START: Define and Export Variables ---
-    # By exporting the variables, we ensure they are available in all sub-processes,
-    # including the 'cat <<EOF' blocks used for file generation.
-
     echo "--- Preparing Template Variables ---"
     export WATCH_FACE_NAME="${watchFaceName}"
     export WATCH_FACE_PKG="${watchFacePkg}"
     export WFF_VERSION="${wffVersion}"
     export WATCH_TYPE="${watchType}"
 
-    # Determine the minimum SDK version based on the selected WFF version.
     if [ "$WFF_VERSION" = "2" ]; then export MIN_SDK_VERSION="34";
     elif [ "$WFF_VERSION" = "3" ]; then export MIN_SDK_VERSION="35";
     elif [ "$WFF_VERSION" = "4" ]; then export MIN_SDK_VERSION="36";
     else export MIN_SDK_VERSION="33"; fi
 
-    # Create a Gradle-friendly project name by removing spaces.
     export PROJECT_NAME=$(echo "$WATCH_FACE_NAME" | sed 's/ //g')
 
     echo "Watch Face Name: $WATCH_FACE_NAME"
     echo "Package Name: $WATCH_FACE_PKG"
-    echo "WFF Version: $WFF_VERSION -> Min SDK: $MIN_SDK_VERSION"
     echo "Project Name: $PROJECT_NAME"
     # --- END: Define and Export Variables ---
 
@@ -58,23 +52,39 @@
 
     # --- START: Copy Template Assets ---
     echo "--- Copying Template Assets ---"
-    # Copy assets from the template repo into the new project, if they exist.
     if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
       cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
       echo "Copied images from ./assets/drawable"
     fi
-    # Create an empty preview placeholder for now.
     touch "$APP_DIR/src/main/res/drawable/preview.png"
 
-    # Copy the gradlew script from assets instead of generating it from a string.
-    # The 'if' condition has been removed to make this a mandatory step.
-    # The script will now fail with a clear error if ./assets/gradlew is not found.
-    echo "Copying gradlew script..."
+    # --- START: Debugging gradlew copy ---
+    echo "--- Debugging gradlew copy ---"
+    echo "Current directory: $(pwd)"
+    echo "Listing contents of . (root of template repo):"
+    ls -la .
+    echo "Listing contents of ./assets (if it exists):"
+    if [ -d ./assets ]; then
+      ls -la ./assets
+    else
+      echo "./assets directory NOT FOUND."
+    fi
+    echo "Checking for existence of ./assets/gradlew with -f:"
+    if [ -f ./assets/gradlew ]; then
+      echo "./assets/gradlew exists and is a regular file."
+    else
+      echo "./assets/gradlew does NOT exist or is not a regular file."
+      echo "Attempting to show directory structure with tree (if available):"
+      tree . || echo "tree command not available or failed."
+    fi
+    echo "--- End Debugging gradlew copy ---"
+
+    # Copy the gradlew script from assets.
+    echo "Attempting to copy gradlew script..."
     cp ./assets/gradlew "$out/gradlew"
     chmod +x "$out/gradlew"
     echo "Copied gradlew script successfully."
 
-    # Copy other essential files from the template repo if they exist.
     if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
     if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
     if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
