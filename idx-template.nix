@@ -203,28 +203,30 @@
         androidComposition.androidsdk
       ];
       env = {
-        # **FIXED**: Escaped the Nix variables with ''${...} so they are written
-        # literally to the file and evaluated by Nix in the workspace context,
-        # not during template generation.
-        ANDROID_HOME = "''${androidComposition.androidsdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "''${androidComposition.androidsdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk17.home}";
+        ANDROID_HOME = "${androidComposition.androidsdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${androidComposition.androidsdk}/libexec/android-sdk";
+        JAVA_HOME = "${pkgs.jdk17.home}";
       };
-      idx.previews = {
-        enable = true;
-        previews = [{
-          id = "wear-os-emulator";
-          manager = "android";
-        }];
+      # **FIXED**: The idx configuration is now correctly structured as a single attribute set.
+      idx = {
+        previews = {
+          enable = true;
+          previews = [{
+            id = "wear-os-emulator";
+            manager = "android";
+          }];
+        };
+        workspace = {
+          onCreate = {
+            gradle-sync = "./gradlew --version";
+          };
+        };
+        extensions = [
+          "VisualStudioExptTeam.vscodeintellicode",
+          "redhat.java",
+          "naco-siren.gradle-language"
+        ];
       };
-      idx.workspace.onCreate = {
-        gradle-sync = "./gradlew --version";
-      };
-      idx.extensions = [
-        "VisualStudioExptTeam.vscodeintellicode",
-        "redhat.java",
-        "naco-siren.gradle-language"
-      ];
     }
     DEV_NIX_EOF
 
