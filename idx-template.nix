@@ -181,52 +181,6 @@
     # --- END: Generate Project Files ---
 
 
-    # --- START: Generate Workspace Environment File ---
-    echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
-    # Create a template dev.nix with a placeholder for the SDK version
-    cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
-    { pkgs, ... }:
-    let
-      # Use the standard Nix mechanism for composing an Android SDK
-      androidComposition = pkgs.androidenv.composeAndroidPackages {
-        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
-        buildToolsVersions = [ "34.0.0" ];
-        # The platform likely handles license acceptance automatically.
-        includeEmulator = true;
-      };
-      sdk = androidComposition.androidsdk;
-    in
-    {
-      channel = "stable-24.05";
-      packages = [
-        pkgs.jdk17
-        pkgs.gradle
-        sdk
-      ];
-      env = {
-        ANDROID_HOME = "''${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "''${sdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk17.home}";
-      };
-      idx = {
-        previews = {
-          enable = false; # Previews are disabled for debugging
-        };
-        workspace = {
-          onCreate = {
-            gradle-sync = "./gradlew --version";
-          };
-        };
-        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" ];
-      };
-    }
-    DEV_NIX_EOF
-
-    # Replace the placeholder with the actual SDK version
-    sed "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
-    rm "$out/.idx/dev.nix.template" # Clean up the template file
-    # --- END: Generate Workspace Environment File ---
-
     echo "--- WFF project scaffolding complete! ---"
   '';
 }
