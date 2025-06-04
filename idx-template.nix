@@ -209,9 +209,12 @@
         sdk
       ];
       env = {
-        ANDROID_HOME = "${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "${sdk}/libexec/android-sdk";
-        JAVA_HOME = "${pkgs.jdk17.home}";
+        # **FIXED**: Escaped the Nix variables with ''${...} so they are written
+        # literally to the file and evaluated by Nix in the workspace context,
+        # not during template generation.
+        ANDROID_HOME = "''${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "''${sdk}/libexec/android-sdk";
+        JAVA_HOME = "''${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
