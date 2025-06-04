@@ -187,10 +187,16 @@
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, ... }:
     let
-      androidComposition = pkgs.androidenv.composeAndroidPackages {
+      androidEnv = pkgs.androidenv.override {
+        inherit pkgs;
+        licenseAccepted = true;
+      };
+
+      androidComposition = androidEnv.composeAndroidPackages {
         includeEmulator = true;
-        platformVersions = [ "34" ];
         includeSources = false;
+        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
+        buildToolsVersions = [ "34.0.0" ];
       };
 
       androidSdk = androidComposition.androidsdk;
@@ -203,10 +209,9 @@
         androidSdk
       ];
       env = {
-        NIXPKGS_ACCEPT_ANDROID_SDK_LICENSE = "1";
-        ANDROID_HOME = "''${androidSdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "''${androidSdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk17.home}";
+        ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+        JAVA_HOME = "${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
@@ -214,12 +219,13 @@
         };
         workspace = {
           onCreate = {
-            gradle-sync = "./gradlew --version";
+            gradle-sync = "gradle --version";
           };
         };
-        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" "vscjava.vscode-java-pack"  "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven"];
+        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
       };
     }
+
     DEV_NIX_EOF
 
     # Replace the placeholder with the actual SDK version
