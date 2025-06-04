@@ -187,19 +187,14 @@
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, ... }:
     let
-      androidEnv = pkgs.androidenv.override {
-        inherit pkgs;
-        licenseAccepted = true;
-      };
-
-      androidComposition = androidEnv.composeAndroidPackages {
-        includeEmulator = true;
-        includeSources = false;
-        platformVersions = [ "__MIN_SDK_VERSION__" ]; # This is a placeholder
+      # Use the standard Nix mechanism for composing an Android SDK
+      androidComposition = pkgs.androidenv.composeAndroidPackages {
+        platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
+        includeEmulator = true;
       };
-
-      sdk = androidComposition.sdk;
+      # **FIXED**: The correct attribute is 'androidsdk', not 'sdk'.
+      sdk = androidComposition.androidsdk;
     in
     {
       channel = "stable-25.05";
@@ -209,9 +204,6 @@
         sdk
       ];
       env = {
-        # **FIXED**: Escaped the Nix variables with ''${...} so they are written
-        # literally to the file and evaluated by Nix in the workspace context,
-        # not during template generation.
         ANDROID_HOME = "''${sdk}/libexec/android-sdk";
         ANDROID_SDK_ROOT = "''${sdk}/libexec/android-sdk";
         JAVA_HOME = "''${pkgs.jdk17.home}";
@@ -228,7 +220,6 @@
         extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
       };
     }
-
     DEV_NIX_EOF
 
     # Replace the placeholder with the actual SDK version
