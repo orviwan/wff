@@ -187,13 +187,18 @@
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, ... }:
     let
+
+      androidEnv = pkgs.androidenv.override {
+        inherit pkgs;
+        licenseAccepted = true;
+      };
+
       # Use the standard Nix mechanism for composing an Android SDK
-      androidComposition = pkgs.androidenv.composeAndroidPackages {
+      androidComposition = androidEnv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ];
         buildToolsVersions = [ "34.0.0" ];
         includeEmulator = true;
       };
-      # **FIXED**: The correct attribute is 'androidsdk', not 'sdk'.
       sdk = androidComposition.androidsdk;
     in
     {
