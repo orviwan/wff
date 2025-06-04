@@ -194,20 +194,22 @@
         licenseAccepted = true; # This is crucial for the SDK to be usable
         includeEmulator = true;
       };
+      # **FIXED**: Define the SDK path as its own variable to avoid scoping issues.
+      sdk = androidComposition.androidsdk;
     in
     {
       channel = "stable-24.05";
       packages = [
         pkgs.jdk17
         pkgs.gradle
-        androidComposition.androidsdk
+        sdk # Use the new 'sdk' variable
       ];
       env = {
-        ANDROID_HOME = "${androidComposition.androidsdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "${androidComposition.androidsdk}/libexec/android-sdk";
+        # Reference the new 'sdk' variable here as well.
+        ANDROID_HOME = "${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${sdk}/libexec/android-sdk";
         JAVA_HOME = "${pkgs.jdk17.home}";
       };
-      # **FIXED**: The idx configuration is now correctly structured as a single attribute set.
       idx = {
         previews = {
           enable = true;
