@@ -1,7 +1,12 @@
 {
   "name": "Wear OS Watch Face (WFF)",
   "description": "A starter template for creating declarative Wear OS watch faces using the Watch Face Format (WFF).",
+  "categories": ["Mobile"],
   "icon": "https://wearos.google.com/static/images/fav/android-chrome-192x192.png",
+  "publisher": "Jon Barlow",
+  "host": {
+    "virtualization": "true"
+  },
   "params": [
     {
       "id": "watchFaceName",

@@ -185,7 +185,7 @@
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Create a template dev.nix with a placeholder for the SDK version
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
-    { pkgs, ... }:
+    { pkgs, lib, ... }:
     let
 
       androidEnv = pkgs.androidenv.override {
@@ -195,7 +195,7 @@
 
       # Use the standard Nix mechanism for composing an Android SDK
       androidComposition = androidEnv.composeAndroidPackages {
-        platformVersions = [ "__MIN_SDK_VERSION__" ];
+        platformVersions = [ "36" ];
         buildToolsVersions = [ "34.0.0" ];
         includeEmulator = true;
       };
@@ -209,22 +209,28 @@
         sdk
       ];
       env = {
-        ANDROID_HOME = "''${sdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "''${sdk}/libexec/android-sdk";
-        JAVA_HOME = "''${pkgs.jdk17.home}";
+        ANDROID_HOME = "${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = lib.mkForce "${sdk}/libexec/android-sdk";
+        JAVA_HOME = "${pkgs.jdk17.home}";
       };
       idx = {
         previews = {
-          enable = false; # Previews are disabled for debugging
+          enable = true;
+          previews = {
+            "android" = {
+              manager = "android";
+            };
+          };
         };
         workspace = {
           onCreate = {
             gradle-sync = "gradle --version";
           };
         };
-        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "redhat.java" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
+        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
       };
     }
+
     DEV_NIX_EOF
 
     # Replace the placeholder with the actual SDK version
