@@ -12,7 +12,7 @@
       "required": true
     },
     {
-      "id": "package",
+      "id": "pkg",
       "name": "Package Name",
       "description": "The Android package name.",
       "type": "text",
