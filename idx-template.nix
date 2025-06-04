@@ -1,6 +1,15 @@
-{ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
+# This is the function signature. It accepts an attribute set of arguments.
+{ ... }@args:
 
 let
+  # We explicitly define our variables from the incoming 'args' set.
+  # This avoids potential recursion issues with the templating system.
+  pkgs = args.pkgs;
+  watchFaceName = args.watchFaceName;
+  watchFacePkg = args.watchFacePkg;
+  wffVersion = args.wffVersion;
+  watchType = args.watchType;
+
   # This helper function generates the content for AndroidManifest.xml
   generateManifest = { watchFaceName, watchFacePkg, wffVersion, minSdkVersion }: ''
     <manifest xmlns:android="http://schemas.android.com/apk/res/android"
