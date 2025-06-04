@@ -199,18 +199,18 @@
         buildToolsVersions = [ "34.0.0" ];
       };
 
-      androidSdk = androidComposition.sdk;
+      sdk = androidComposition.sdk;
     in
     {
       channel = "stable-25.05";
       packages = [
         pkgs.jdk17
         pkgs.gradle
-        androidSdk
+        sdk
       ];
       env = {
-        ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
-        ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+        ANDROID_HOME = "${sdk}/libexec/android-sdk";
+        ANDROID_SDK_ROOT = "${sdk}/libexec/android-sdk";
         JAVA_HOME = "${pkgs.jdk17.home}";
       };
       idx = {
