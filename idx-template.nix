@@ -1,15 +1,9 @@
 # This is the function signature. It accepts an attribute set of arguments.
-{ ... }@args:
+# **FIXED**: The function signature now explicitly defines the expected arguments
+# to prevent infinite recursion errors in the templating system.
+({ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }@args):
 
 let
-  # We explicitly define our variables from the incoming 'args' set.
-  # This avoids potential recursion issues with the templating system.
-  pkgs = args.pkgs;
-  watchFaceName = args.watchFaceName;
-  watchFacePkg = args.watchFacePkg;
-  wffVersion = args.wffVersion;
-  watchType = args.watchType;
-
   # This helper function generates the content for AndroidManifest.xml
   generateManifest = { watchFaceName, watchFacePkg, wffVersion, minSdkVersion }: ''
     <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -108,7 +102,7 @@ let
     }
   '';
 
-  # **FIXED**: The logic for MIN_SDK_VERSION is now in the Nix `let` block,
+  # The logic for MIN_SDK_VERSION is now in the Nix `let` block,
   # so it's available during Nix evaluation time.
   MIN_SDK_VERSION =
     if wffVersion == "2" then "34"
@@ -201,7 +195,7 @@ pkgs.writeShellScriptBin "scaffold-wff-project" ''
   cat <<EOF > "$out/settings.gradle"
   pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
   dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
-  rootProject.name = "${(builtins.replaceStrings [ " " ] [ "" ] watchFaceName)}"
+  rootProject.name = "${(pkgs.lib.strings.replaceAll " " "" watchFaceName)}"
   include ':app'
   EOF
 
