@@ -199,7 +199,7 @@
         buildToolsVersions = [ "34.0.0" ];
       };
 
-      androidSdk = androidComposition.androidsdk;
+      androidSdk = androidComposition.sdk;
     in
     {
       channel = "stable-25.05";
