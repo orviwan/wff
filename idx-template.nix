@@ -1,8 +1,21 @@
-# This is the function signature. It accepts an attribute set of arguments.
-# **FIXED**: Corrected the function signature syntax to remove the invalid parentheses.
-{ pkgs, watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
+# **FIXED**: Removed 'pkgs' from the function signature to break recursion.
+# 'pkgs' will now be defined internally.
+{ watchFaceName, watchFacePkg, wffVersion, watchType, ... }:
 
 let
+  # **NEW**: Define 'pkgs' internally by fetching a stable nixpkgs release.
+  # This makes the template self-contained and avoids recursion with the
+  # templating system's 'pkgs' resolution.
+  pkgs = import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-23.11.tar.gz") {
+    # Configuration for the imported nixpkgs
+    config = {
+      # Accept the Android SDK license. This is crucial.
+      android_sdk.accept_license = true;
+      # Allow unfree packages, as some Android SDK components might be considered unfree.
+      allowUnfree = true;
+    };
+  };
+
   # This helper function generates the content for AndroidManifest.xml
   generateManifest = { watchFaceName, watchFacePkg, wffVersion, minSdkVersion }: ''
     <manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -59,9 +72,15 @@ let
     '';
 
   # This helper function generates the workspace's .idx/dev.nix file content
+  # Note: The 'pkgs' used inside this generated dev.nix string will be
+  # the one provided by Firebase Studio to the dev.nix file, not the one
+  # defined in this template's 'let' block. This is correct.
   generateDevNix = { minSdkVersion }: ''
     { pkgs, ... }: {
-      channel = "unstable";
+      # It's generally better for the dev.nix to also pin its channel,
+      # but "unstable" can be used for getting the latest.
+      # Or, it could use the same pinned version as this template.
+      channel = "unstable"; # Or use the same nixos-23.11 as this template.
 
       packages = [
         pkgs.jdk17
