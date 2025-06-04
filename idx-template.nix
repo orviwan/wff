@@ -10,28 +10,43 @@
   ...
 }: {
   # We don't need any special packages to run the bootstrap script itself.
-  packages = [];
+  # The script will use standard shell commands available in the base environment.
+  packages = [ pkgs.gnused ]; # Using gnused for cross-platform compatible `sed`
 
   # The 'bootstrap' attribute contains the shell script that scaffolds the entire project.
   # Firebase Studio will execute this script in the new workspace directory ($out).
   bootstrap = ''
-    # Exit immediately if any command fails
-    set -e
+    # Exit immediately if any command fails, and treat unset variables as an error.
+    set -eu
 
-    # --- START: Define Variables ---
+    # --- START: Define and Export Variables ---
+    # By exporting the variables, we ensure they are available in all sub-processes,
+    # including the 'cat <<EOF' blocks used for file generation.
+
+    echo "--- Preparing Template Variables ---"
+    export WATCH_FACE_NAME="${watchFaceName}"
+    export WATCH_FACE_PKG="${watchFacePkg}"
+    export WFF_VERSION="${wffVersion}"
+    export WATCH_TYPE="${watchType}"
+
     # Determine the minimum SDK version based on the selected WFF version.
-    # **FIXED**: The variable is now exported to be available in subshells like cat <<EOF.
-    export MIN_SDK_VERSION="33"
-    if [ "${wffVersion}" = "2" ]; then export MIN_SDK_VERSION="34"; fi
-    if [ "${wffVersion}" = "3" ]; then export MIN_SDK_VERSION="35"; fi
-    if [ "${wffVersion}" = "4" ]; then export MIN_SDK_VERSION="36"; fi
-    # Replace spaces in the watch face name for the Gradle project name.
-    PROJECT_NAME=$(echo "${watchFaceName}" | sed 's/ //g')
-    # --- END: Define Variables ---
+    if [ "$WFF_VERSION" = "2" ]; then export MIN_SDK_VERSION="34";
+    elif [ "$WFF_VERSION" = "3" ]; then export MIN_SDK_VERSION="35";
+    elif [ "$WFF_VERSION" = "4" ]; then export MIN_SDK_VERSION="36";
+    else export MIN_SDK_VERSION="33"; fi
+
+    # Create a Gradle-friendly project name by removing spaces.
+    export PROJECT_NAME=$(echo "$WATCH_FACE_NAME" | sed 's/ //g')
+
+    echo "Watch Face Name: $WATCH_FACE_NAME"
+    echo "Package Name: $WATCH_FACE_PKG"
+    echo "WFF Version: $WFF_VERSION -> Min SDK: $MIN_SDK_VERSION"
+    echo "Project Name: $PROJECT_NAME"
+    # --- END: Define and Export Variables ---
 
 
     # --- START: Create Directory Structure ---
-    echo "Creating project directory structure..."
+    echo "--- Creating Project Directory Structure ---"
     APP_DIR="$out/app"
     mkdir -p "$APP_DIR/src/main/res/raw"
     mkdir -p "$APP_DIR/src/main/res/xml"
@@ -42,13 +57,15 @@
 
 
     # --- START: Copy Template Assets ---
-    echo "Copying template assets..."
+    echo "--- Copying Template Assets ---"
     # Copy assets from the template repo into the new project, if they exist.
     if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
       cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+      echo "Copied images from ./assets/drawable"
     fi
     # Create an empty preview placeholder for now.
     touch "$APP_DIR/src/main/res/drawable/preview.png"
+
     # Copy other essential files from the template repo if they exist.
     if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
     if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
@@ -58,27 +75,29 @@
 
 
     # --- START: Generate Project Files ---
+    echo "--- Generating Project Files ---"
+
     echo "Generating AndroidManifest.xml..."
     cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
     <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="${watchFacePkg}">
+        package="$WATCH_FACE_PKG">
         <uses-permission android:name="android.permission.WAKE_LOCK" />
         <uses-feature android:name="android.hardware.type.watch" />
         <application
             android:allowBackup="true"
             android:icon="@drawable/preview"
-            android:label="${watchFaceName}"
+            android:label="$WATCH_FACE_NAME"
             android:hasCode="false">
             <meta-data
                 android:name="com.google.android.wearable.standalone"
                 android:value="true" />
             <property
                 android:name="com.google.wear.watchface.format.version"
-                android:value="${wffVersion}" />
+                android:value="$WFF_VERSION" />
             <service
                 android:name="androidx.wear.watchface.format.WatchFaceFormatService"
                 android:exported="true"
-                android:label="${watchFaceName}"
+                android:label="$WATCH_FACE_NAME"
                 android:permission="android.permission.BIND_WALLPAPER">
                 <meta-data
                     android:name="android.service.wallpaper"
@@ -98,7 +117,7 @@
     EOF
 
     echo "Generating watchface.xml..."
-    if [ "${watchType}" = "Analog" ]; then
+    if [ "$WATCH_TYPE" = "Analog" ]; then
       cat <<EOF > "$APP_DIR/src/main/res/raw/watchface.xml"
       <WatchFace width="450" height="450">
         <Scene>
@@ -128,7 +147,7 @@
     echo "Generating strings.xml..."
     cat <<EOF > "$APP_DIR/src/main/res/values/strings.xml"
     <resources>
-        <string name="app_name">${watchFaceName}</string>
+        <string name="app_name">$WATCH_FACE_NAME</string>
     </resources>
     EOF
 
@@ -136,11 +155,11 @@
     cat <<EOF > "$APP_DIR/build.gradle"
     plugins { id 'com.android.application' }
     android {
-        namespace '${watchFacePkg}'
+        namespace '$WATCH_FACE_PKG'
         compileSdk 34
         defaultConfig {
-            applicationId "${watchFacePkg}"
-            minSdk ${MIN_SDK_VERSION}
+            applicationId "$WATCH_FACE_PKG"
+            minSdk $MIN_SDK_VERSION
             targetSdk 34
             versionCode 1
             versionName "1.0"
@@ -157,42 +176,45 @@
     cat <<EOF > "$out/settings.gradle"
     pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
     dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
-    rootProject.name = "${PROJECT_NAME}"
+    rootProject.name = "$PROJECT_NAME"
     include ':app'
     EOF
-
     # --- END: Generate Project Files ---
 
 
     # --- START: Generate Workspace Environment File ---
-    # This creates the .idx/dev.nix file that sets up the Nix environment
-    # for the new workspace.
-    echo "Generating .idx/dev.nix..."
+    echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
     # Note the DEV_NIX_EOF marker to prevent shell expansion of variables
-    # inside this block that are intended for Nix.
+    # inside this block that are intended for Nix, not for this script.
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix"
     { pkgs, ... }: {
-      channel = "unstable";
+      # It is recommended to pin the channel for reproducible environments.
+      channel = "stable-24.05";
+
+      # These packages will be available in your workspace terminal.
       packages = [
         pkgs.jdk17
         pkgs.gradle
-        # Note: We use the MIN_SDK_VERSION variable passed from the shell script
-        # into this Nix file's context. This is a special feature of this setup.
-        # However, for simplicity here, we'll hardcode a default.
-        # A more advanced template could pass MIN_SDK_VERSION into this file.
+        # android-nixpkgs provides a comprehensive and up-to-date Android SDK.
         (pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: with sdkPkgs; [
           platform-tools
           build-tools-34-0-0
-          platforms-android-34 # Defaulting to API 34
+          # We default to API 34 here for simplicity. A more advanced template
+          # could pass the MIN_SDK_VERSION from the bootstrap script into this file.
+          platforms-android-34
           cmdline-tools-latest
           emulator
         ]))
       ];
+
+      # These environment variables will be set in your workspace.
       env = {
         ANDROID_SDK_ROOT = "${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
         ANDROID_HOME = "${pkgs.pkgsCross.android-nixpkgs.sdk (sdkPkgs: [])}/libexec/android-sdk";
         JAVA_HOME = "${pkgs.jdk17.home}";
       };
+
+      # This section configures the IDX previews.
       idx.previews = {
         enable = true;
         previews = [{
@@ -200,9 +222,13 @@
           manager = "android";
         }];
       };
+
+      # Commands to run when the workspace is first created.
       idx.workspace.onCreate = {
         gradle-sync = "./gradlew --version";
       };
+
+      # VS Code extensions to install in the workspace.
       idx.extensions = [
         "VisualStudioExptTeam.vscodeintellicode",
         "redhat.java",
