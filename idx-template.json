@@ -23,6 +23,12 @@
       "default": "com.example.mywatchface"
     },
     {
+      "id": "platforms",
+      "name": "Platforms",
+      "type": "text",
+      "default": "web,android"
+    },
+    {
       "id": "wffVersion",
       "name": "Watch Face Format Version",
       "description": "Select the WFF version. This will set the corresponding minimum API level.",
