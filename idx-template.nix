@@ -34,6 +34,22 @@
     # --- END: Define and Export Variables ---
 
 
+    # --- START: Validate Parameters ---
+    echo "--- Validating Parameters ---"
+    # **NEW**: Check if the package name is valid before continuing.
+    if ! echo "$WATCH_FACE_PKG" | grep -q "\\."; then
+      echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      echo "ERROR: Invalid Package Name."
+      echo "The package name must contain at least one dot ('.')."
+      echo "Provided value was: '$WATCH_FACE_PKG'"
+      echo "Please delete this workspace and create a new one with a valid package name (e.g., com.example.myface)."
+      echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      exit 1
+    fi
+    echo "Parameters appear valid."
+    # --- END: Validate Parameters ---
+
+
     # --- START: Create Directory Structure ---
     echo "--- Creating Project Directory Structure ---"
     APP_DIR="$out/app"
