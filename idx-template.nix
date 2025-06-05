@@ -25,10 +25,20 @@
     export WFF_VERSION="${wffVersion}"
     export WATCH_TYPE="${watchType}"
 
-    if [ "$WFF_VERSION" = "2" ]; then export MIN_SDK_VERSION="34";
-    elif [ "$WFF_VERSION" = "3" ]; then export MIN_SDK_VERSION="35";
-    elif [ "$WFF_VERSION" = "4" ]; then export MIN_SDK_VERSION="36";
-    else export MIN_SDK_VERSION="33"; fi
+    # Determine the minimum SDK and Build Tools versions based on the selected WFF version.
+    if [ "$WFF_VERSION" = "2" ]; then
+      export MIN_SDK_VERSION="34"
+      export BUILD_TOOLS_VERSION="34.0.0"
+    elif [ "$WFF_VERSION" = "3" ]; then
+      export MIN_SDK_VERSION="35"
+      export BUILD_TOOLS_VERSION="35.0.0"
+    elif [ "$WFF_VERSION" = "4" ]; then
+      export MIN_SDK_VERSION="36"
+      export BUILD_TOOLS_VERSION="36.0.0"
+    else
+      export MIN_SDK_VERSION="33"
+      export BUILD_TOOLS_VERSION="33.0.2"
+    fi
 
     export PROJECT_NAME=$(echo "$WATCH_FACE_NAME" | sed 's/ //g')
     # --- END: Define and Export Variables ---
@@ -172,10 +182,8 @@
     EOF
 
     echo "Generating root build.gradle..."
-    # **FIXED**: Downgraded the Android Gradle Plugin version to be compatible
-    # with the Gradle version provided by the Nix environment.
     cat <<EOF > "$out/build.gradle"
-    plugins { id 'com.android.application' version '8.0.2' apply false }
+    plugins { id 'com.android.application' version '8.2.0' apply false }
     EOF
 
     echo "Generating settings.gradle..."
@@ -190,7 +198,7 @@
 
     # --- START: Generate Workspace Environment File ---
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
-    # Create a template dev.nix with a placeholder for the SDK version
+    # Create a template dev.nix with placeholders
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, lib, ... }:
     let
@@ -200,7 +208,7 @@
       };
       androidComposition = androidEnv.composeAndroidPackages {
         platformVersions = [ "__MIN_SDK_VERSION__" ];
-        buildToolsVersions = [ "34.0.0" ];
+        buildToolsVersions = [ "__BUILD_TOOLS_VERSION__" ];
         includeEmulator = true;
         includeSources = false;
       };
@@ -239,8 +247,11 @@
     }
     DEV_NIX_EOF
 
-    # Replace the placeholder with the actual SDK version
-    sed "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
+    # Replace the placeholders with the actual SDK versions
+    sed -e "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" \
+        -e "s/__BUILD_TOOLS_VERSION__/$BUILD_TOOLS_VERSION/g" \
+        "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
+    
     rm "$out/.idx/dev.nix.template" # Clean up the template file
     # --- END: Generate Workspace Environment File ---
 
