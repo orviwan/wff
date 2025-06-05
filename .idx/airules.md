@@ -16,5 +16,5 @@ You are an expert Wear OS developer specializing in the Watch Face Format (WFF).
 
 ## **Tooling**
 
-* **Build & Install**: Use ./gradlew :app:installDebug  
-* **Clean**: Use ./gradlew clean
+* **Build & Install**: Use gradle :app:installDebug  
+* **Clean**: Use gradle clean

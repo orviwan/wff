@@ -9,8 +9,8 @@
   watchType,
   ...
 }: {
-  # We need gnused for cross-platform compatible `sed` command, and curl to download the wrapper.
-  packages = [ pkgs.gnused pkgs.curl ];
+  # We need gnused for cross-platform compatible `sed` command.
+  packages = [ pkgs.gnused ];
 
   # The 'bootstrap' attribute contains the shell script that scaffolds the entire project.
   # Firebase Studio will execute this script in the new workspace directory ($out).
@@ -31,10 +31,6 @@
     else export MIN_SDK_VERSION="33"; fi
 
     export PROJECT_NAME=$(echo "$WATCH_FACE_NAME" | sed 's/ //g')
-
-    echo "Watch Face Name: $WATCH_FACE_NAME"
-    echo "Package Name: $WATCH_FACE_PKG"
-    echo "Project Name: $PROJECT_NAME"
     # --- END: Define and Export Variables ---
 
 
@@ -46,7 +42,6 @@
     mkdir -p "$APP_DIR/src/main/res/drawable"
     mkdir -p "$APP_DIR/src/main/res/values"
     mkdir -p "$out/.idx"
-    mkdir -p "$out/gradle/wrapper"
     # --- END: Create Directory Structure ---
 
 
@@ -56,36 +51,18 @@
     echo "Copying images from ${./assets/drawable}..."
     cp ${./assets/drawable}/*.png "$APP_DIR/src/main/res/drawable/"
     
-    echo "Copying gradlew script from ${./assets/gradlew}..."
-    cp ${./assets/gradlew} "$out/gradlew"
-    chmod +x "$out/gradlew"
-
     echo "Copying project configuration files..."
     cp ${./.idx/airules.md} "$out/.idx/airules.md"
     cp ${./.gitignore} "$out/.gitignore"
     cp ${./README.md} "$out/README.md"
-    # **FIXED**: Copying BLUEPRINT.md with correct case.
     cp ${./BLUEPRINT.md} "$out/BLUEPRINT.md"
     
-    # Create an empty preview placeholder.
     touch "$APP_DIR/src/main/res/drawable/preview.png"
     # --- END: Copy Template Assets ---
 
 
     # --- START: Generate Project Files ---
     echo "--- Generating Project Files ---"
-
-    echo "Generating gradle-wrapper.properties..."
-    cat <<EOF > "$out/gradle/wrapper/gradle-wrapper.properties"
-    distributionBase=GRADLE_USER_HOME
-    distributionPath=wrapper/dists
-    distributionUrl=https\://services.gradle.org/distributions/gradle-8.2-bin.zip
-    zipStoreBase=GRADLE_USER_HOME
-    zipStorePath=wrapper/dists
-    EOF
-
-    echo "Downloading gradle-wrapper.jar..."
-    curl -L -o "$out/gradle/wrapper/gradle-wrapper.jar" "https://services.gradle.org/distributions/gradle-8.2-wrapper.jar"
 
     echo "Generating AndroidManifest.xml..."
     cat <<EOF > "$APP_DIR/src/main/AndroidManifest.xml"
@@ -194,7 +171,6 @@
 
     # --- START: Generate Workspace Environment File ---
     echo "--- Generating Workspace Environment (.idx/dev.nix) ---"
-    # Create a template dev.nix with a placeholder for the SDK version
     cat <<'DEV_NIX_EOF' > "$out/.idx/dev.nix.template"
     { pkgs, lib, ... }:
     let
@@ -243,10 +219,8 @@
     }
     DEV_NIX_EOF
 
-    # Replace the placeholder with the actual SDK version
     sed "s/__MIN_SDK_VERSION__/$MIN_SDK_VERSION/g" "$out/.idx/dev.nix.template" > "$out/.idx/dev.nix"
-    rm "$out/.idx/dev.nix.template" # Clean up the template file
-    # --- END: Generate Workspace Environment File ---
+    rm "$out/.idx/dev.nix.template"
 
     echo "--- WFF project scaffolding complete! ---"
   '';
