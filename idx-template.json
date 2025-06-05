@@ -11,21 +11,19 @@
     {
       "id": "platforms",
       "name": "Platforms",
-      "type": "text",
-      "default": "web,android"
+      "type": "text"
     },
     {
       "id": "watchFaceName",
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
-      "type": "text",
-      "example": "My Watch Face"},
+      "type": "text"
+    },
     {
       "id": "watchFacePkg",
       "name": "Package Name",
-      "description": "The Android package name.",
-      "type": "text",
-      "default": "com.example.mywatchface"
+      "description": "The Android package name. e.g. com.example.mywatchface",
+      "type": "text"
     },
     {
       "id": "wffVersion",
