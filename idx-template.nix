@@ -52,8 +52,7 @@
 
     # --- START: Copy Template Assets ---
     echo "--- Copying Template Assets ---"
-    # **FIXED**: Use Nix interpolation `${...}` to get the correct path to source files.
-    # This makes the template's own files available inside the bootstrap script.
+    # Use Nix interpolation to get the correct path to source files.
     echo "Copying images from ./assets/drawable..."
     cp ${./assets/drawable}/*.png "$APP_DIR/src/main/res/drawable/"
     
