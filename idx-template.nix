@@ -61,7 +61,7 @@
     if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
     if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
     if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
-    if [ -f ./assets/gradlew ]; then cp ./assets/gradlew "$out/gradlew"; fi
+    if [ -f ./assets/gradlew ]; then cp ./assets/gradlew "$out/"; fi
     chmod +x "$out/gradlew"
     # --- END: Copy Template Assets ---
 
