@@ -9,7 +9,7 @@ A starter template for creating declarative Wear OS watch faces using the Watch 
 3. **Add Image Assets**: Place your PNG assets (like clock hands or background images) in the app/src/main/res/drawable/ directory.  
 4. **Preview Your Changes**:  
    * Open the terminal in Firebase Studio.  
-   * Run gradle :app:installDebug to build and install the watch face on the emulator.  
+   * Run `gradle :app:installDebug` to build and install the watch face on the emulator.  
    * On the emulator screen, long-press the current watch face to open the picker, then find and select your watch face to see it live.
 
 ## **Key Files**
