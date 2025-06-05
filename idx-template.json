@@ -13,13 +13,13 @@
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
       "type": "text",
+      "default": "My Watch Face",
       "required": true
     },
     {
       "id": "watchFacePkg",
       "name": "Package Name",
       "description": "The Android package name.",
-      "default": "com.example.mywatchface",
       "type": "text",
       "required": true
     },
