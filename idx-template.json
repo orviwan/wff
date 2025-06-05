@@ -13,7 +13,6 @@
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
       "type": "text",
-      "default": "My WFF Watch",
       "required": true
     },
     {
@@ -21,7 +20,6 @@
       "name": "Package Name",
       "description": "The Android package name.",
       "type": "text",
-      "default": "com.example.mywffwatch",
       "required": true
     },
     {
