@@ -22,7 +22,7 @@
     {
       "id": "watchFacePkg",
       "name": "Package Name",
-      "description": "The Android package name. e.g. com.example.mywatchface",
+      "default": "com.example.mywatchface",
       "type": "text"
     },
     {
