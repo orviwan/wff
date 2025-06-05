@@ -13,15 +13,14 @@
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
       "type": "text",
-      "default": "My Watch Face",
-      "required": true
+      "default": "My Watch Face"
     },
     {
       "id": "watchFacePkg",
       "name": "Package Name",
       "description": "The Android package name.",
       "type": "text",
-      "required": true
+      "default": "com.example.mywatchface"
     },
     {
       "id": "wffVersion",
@@ -29,8 +28,7 @@
       "description": "Select the WFF version. This will set the corresponding minimum API level.",
       "type": "enum",
       "options": { "1": "1", "2": "2", "3": "3", "4": "4" },
-      "default": "4",
-      "required": true
+      "default": "4"
     },
     {
       "id": "watchType",
@@ -38,8 +36,7 @@
       "description": "Choose a starting point for your watch face.",
       "type": "enum",
       "options": { "Analog": "Analog", "Digital": "Digital" },
-      "default": "Analog",
-      "required": true
+      "default": "Analog"
     }
   ]
 }
