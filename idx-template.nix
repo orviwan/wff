@@ -37,7 +37,6 @@
     echo "Project Name: $PROJECT_NAME"
     # --- END: Define and Export Variables ---
 
-
     # --- START: Create Directory Structure ---
     echo "--- Creating Project Directory Structure ---"
     APP_DIR="$out/app"
@@ -58,39 +57,13 @@
     fi
     touch "$APP_DIR/src/main/res/drawable/preview.png"
 
-    # --- START: Debugging gradlew copy ---
-    echo "--- Debugging gradlew copy ---"
-    echo "Current directory: $(pwd)"
-    echo "Listing contents of . (root of template repo):"
-    ls -la .
-    echo "Listing contents of ./assets (if it exists):"
-    if [ -d ./assets ]; then
-      ls -la ./assets
-    else
-      echo "./assets directory NOT FOUND."
-    fi
-    echo "Checking for existence of ./assets/gradlew with -f:"
-    if [ -f ./assets/gradlew ]; then
-      echo "./assets/gradlew exists and is a regular file."
-    else
-      echo "./assets/gradlew does NOT exist or is not a regular file."
-      echo "Attempting to show directory structure with tree (if available):"
-      tree . || echo "tree command not available or failed."
-    fi
-    echo "--- End Debugging gradlew copy ---"
-
-    # Copy the gradlew script from assets.
-    echo "Attempting to copy gradlew script..."
-    cp ./assets/gradlew "$out/gradlew"
-    chmod +x "$out/gradlew"
-    echo "Copied gradlew script successfully."
-
     if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
     if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
     if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
     if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
+    if [ -f ./assets/gradlew ]; then cp ./assets/gradlew "$out/gradlew"; fi
+    chmod +x "$out/gradlew"
     # --- END: Copy Template Assets ---
-
 
     # --- START: Generate Project Files ---
     echo "--- Generating Project Files ---"
