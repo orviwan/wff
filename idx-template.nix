@@ -64,7 +64,8 @@
     cp ${./.idx/airules.md} "$out/.idx/airules.md"
     cp ${./.gitignore} "$out/.gitignore"
     cp ${./README.md} "$out/README.md"
-    cp ${./blueprint.md} "$out/blueprint.md"
+    # **FIXED**: Copying BLUEPRINT.md with correct case.
+    cp ${./BLUEPRINT.md} "$out/BLUEPRINT.md"
     
     # Create an empty preview placeholder.
     touch "$APP_DIR/src/main/res/drawable/preview.png"
