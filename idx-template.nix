@@ -224,8 +224,6 @@
         pkgs.jdk17
         pkgs.gradle_8
         sdk
-        pkgs.nodePackages.firebase-tools
-        pkgs.unzip
       ];
       env = {
         ANDROID_HOME = "''${sdk}/libexec/android-sdk";
@@ -246,7 +244,7 @@
             gradle-sync = "gradle --version";
           };
         };
-        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "naco-siren.gradle-language" "vscjava.vscode-java-pack" "vscjava.vscode-gradle" "vscjava.vscode-java-debug" "vscjava.vscode-java-dependency" "vscjava.vscode-java-test" "vscjava.vscode-maven" ];
+        extensions = [ "VisualStudioExptTeam.vscodeintellicode" "naco-siren.gradle-language" "vscjava.vscode-gradle" ];
       };
     }
     DEV_NIX_EOF
