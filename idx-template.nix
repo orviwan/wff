@@ -62,7 +62,7 @@
     if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
     if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
     if [ -f ./assets/gradlew ]; then cp ./assets/gradlew "$out/"; fi
-    chmod +x "$out/gradlew"
+    # chmod +x "$out/gradlew"
     # --- END: Copy Template Assets ---
 
     # --- START: Generate Project Files ---
