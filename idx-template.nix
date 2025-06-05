@@ -7,8 +7,6 @@
   watchFacePkg,
   wffVersion,
   watchType,
-  # **FIXED**: The 'src' argument is added to get a reference to the template's source files.
-  src,
   ...
 }: {
   # We need gnused for cross-platform compatible `sed` command, and curl to download the wrapper.
@@ -54,19 +52,19 @@
 
     # --- START: Copy Template Assets ---
     echo "--- Copying Template Assets ---"
-    # **FIXED**: Copy files from the 'src' path provided by Nix, not from a relative path.
-    echo "Copying images from ${src}/assets/drawable..."
-    cp ${src}/assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
+    # Use Nix path interpolation to make template files available to the script.
+    echo "Copying images from ${./assets/drawable}..."
+    cp ${./assets/drawable}/*.png "$APP_DIR/src/main/res/drawable/"
     
-    echo "Copying gradlew script from ${src}/assets/gradlew..."
-    cp ${src}/assets/gradlew "$out/gradlew"
+    echo "Copying gradlew script from ${./assets/gradlew}..."
+    cp ${./assets/gradlew} "$out/gradlew"
     chmod +x "$out/gradlew"
 
     echo "Copying project configuration files..."
-    cp ${src}/.idx/airules.md "$out/.idx/airules.md"
-    cp ${src}/.gitignore "$out/.gitignore"
-    cp ${src}/README.md "$out/README.md"
-    cp ${src}/blueprint.md "$out/blueprint.md"
+    cp ${./.idx/airules.md} "$out/.idx/airules.md"
+    cp ${./.gitignore} "$out/.gitignore"
+    cp ${./README.md} "$out/README.md"
+    cp ${./blueprint.md} "$out/blueprint.md"
     
     # Create an empty preview placeholder.
     touch "$APP_DIR/src/main/res/drawable/preview.png"
