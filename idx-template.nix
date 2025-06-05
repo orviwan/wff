@@ -10,7 +10,7 @@
   ...
 }: {
   # We need gnused for cross-platform compatible `sed` command, and curl to download the wrapper.
-  packages = [ pkgs.gnused pkgs.curl pkgs.tree ]; # Added tree for debugging
+  packages = [ pkgs.gnused pkgs.curl ];
 
   # The 'bootstrap' attribute contains the shell script that scaffolds the entire project.
   # Firebase Studio will execute this script in the new workspace directory ($out).
@@ -37,6 +37,7 @@
     echo "Project Name: $PROJECT_NAME"
     # --- END: Define and Export Variables ---
 
+
     # --- START: Create Directory Structure ---
     echo "--- Creating Project Directory Structure ---"
     APP_DIR="$out/app"
@@ -51,19 +52,25 @@
 
     # --- START: Copy Template Assets ---
     echo "--- Copying Template Assets ---"
-    if [ -d ./assets/drawable ] && [ "$(ls -A ./assets/drawable)" ]; then
-      cp ./assets/drawable/*.png "$APP_DIR/src/main/res/drawable/"
-      echo "Copied images from ./assets/drawable"
-    fi
-    touch "$APP_DIR/src/main/res/drawable/preview.png"
+    # **FIXED**: Use Nix interpolation `${...}` to get the correct path to source files.
+    # This makes the template's own files available inside the bootstrap script.
+    echo "Copying images from ./assets/drawable..."
+    cp ${./assets/drawable}/*.png "$APP_DIR/src/main/res/drawable/"
+    
+    echo "Copying gradlew script..."
+    cp ${./assets/gradlew} "$out/gradlew"
+    chmod +x "$out/gradlew"
 
-    if [ -f ./.idx/airules.md ]; then cp ./.idx/airules.md "$out/.idx/"; fi
-    if [ -f ./.gitignore ]; then cp ./.gitignore "$out/"; fi
-    if [ -f ./README.md ]; then cp ./README.md "$out/"; fi
-    if [ -f ./blueprint.md ]; then cp ./blueprint.md "$out/"; fi
-    if [ -f ./assets/gradlew ]; then cp ./assets/gradlew "$out/"; fi
-    # chmod +x "$out/gradlew"
+    echo "Copying project configuration files..."
+    cp ${./.idx/airules.md} "$out/.idx/airules.md"
+    cp ${./.gitignore} "$out/.gitignore"
+    cp ${./README.md} "$out/README.md"
+    cp ${./blueprint.md} "$out/blueprint.md"
+    
+    # Create an empty preview placeholder.
+    touch "$APP_DIR/src/main/res/drawable/preview.png"
     # --- END: Copy Template Assets ---
+
 
     # --- START: Generate Project Files ---
     echo "--- Generating Project Files ---"
