@@ -25,7 +25,7 @@
     export WFF_VERSION="${wffVersion}"
     export WATCH_TYPE="${watchType}"
 
-    # Determine the minimum SDK and Build Tools versions based on the selected WFF version.
+    # **FIXED**: The Build Tools version is now dynamic alongside the SDK version.
     if [ "$WFF_VERSION" = "2" ]; then
       export MIN_SDK_VERSION="34"
       export BUILD_TOOLS_VERSION="34.0.0"
@@ -166,6 +166,8 @@
     EOF
 
     echo "Generating app/build.gradle..."
+    # The compileSdk and targetSdk now use the MIN_SDK_VERSION
+    # variable to ensure they are consistent with the Nix environment.
     cat <<EOF > "$APP_DIR/build.gradle"
     plugins { id 'com.android.application' }
     android {
@@ -182,8 +184,10 @@
     EOF
 
     echo "Generating root build.gradle..."
+    # Downgraded the Android Gradle Plugin version to be compatible
+    # with the Gradle version provided by the Nix environment.
     cat <<EOF > "$out/build.gradle"
-    plugins { id 'com.android.application' version '8.2.0' apply false }
+    plugins { id 'com.android.application' version '8.1.4' apply false }
     EOF
 
     echo "Generating settings.gradle..."
