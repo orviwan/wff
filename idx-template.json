@@ -9,6 +9,12 @@
   },
   "params": [
     {
+      "id": "platforms",
+      "name": "Platforms",
+      "type": "text",
+      "default": "web,android"
+    },
+    {
       "id": "watchFaceName",
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
@@ -21,12 +27,6 @@
       "description": "The Android package name.",
       "type": "text",
       "default": "com.example.mywatchface"
-    },
-    {
-      "id": "platforms",
-      "name": "Platforms",
-      "type": "text",
-      "default": "web,android"
     },
     {
       "id": "wffVersion",
