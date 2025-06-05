@@ -22,9 +22,6 @@
       "description": "The Android package name.",
       "type": "text",
       "default": "com.example.mywffwatch",
-      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$",
-      "patternError": "Package name must start with a lowercase letter, contain 1 period, and can only contain lowercase letters, numbers, and underscores.",
-      "example": "com.example.mywffwatch",
       "required": true
     },
     {
