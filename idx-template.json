@@ -19,8 +19,7 @@
       "name": "Watch Face Name",
       "description": "The user-visible name of your watch face.",
       "type": "text",
-      "default": "My Watch Face"
-    },
+      "example": "My Watch Face"},
     {
       "id": "watchFacePkg",
       "name": "Package Name",
