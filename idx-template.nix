@@ -36,7 +36,7 @@
 
     # --- START: Validate Parameters ---
     echo "--- Validating Parameters ---"
-    # **NEW**: Check if the package name is valid before continuing.
+    # Check if the package name is valid before continuing.
     if ! echo "$WATCH_FACE_PKG" | grep -q "\\."; then
       echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
       echo "ERROR: Invalid Package Name."
@@ -172,8 +172,10 @@
     EOF
 
     echo "Generating root build.gradle..."
+    # **FIXED**: Downgraded the Android Gradle Plugin version to be compatible
+    # with the Gradle version provided by the Nix environment.
     cat <<EOF > "$out/build.gradle"
-    plugins { id 'com.android.application' version '8.2.0' apply false }
+    plugins { id 'com.android.application' version '8.0.2' apply false }
     EOF
 
     echo "Generating settings.gradle..."
